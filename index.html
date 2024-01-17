@@ -196,7 +196,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2024-01-17 19:55:59 / 修改时间：19:57:33" itemprop="dateCreated datePublished" datetime="2024-01-17T19:55:59+08:00">2024-01-17</time>
+      <time title="创建时间：2024-01-17 19:55:59 / 修改时间：20:02:23" itemprop="dateCreated datePublished" datetime="2024-01-17T19:55:59+08:00">2024-01-17</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -223,202 +223,15 @@
 <li>系统构成与实现</li>
 <li>动态存储器分配与管理技术</li>
 </ul>
-<h3 id="物理与虚拟寻址"><a href="#物理与虚拟寻址" class="headerlink" title="物理与虚拟寻址"></a>物理与虚拟寻址</h3><p>CPU访问内存的最自然方式是使用物理寻址<br>早期的PC使用物理寻址,而现代处理器使用虚拟寻址<br>CPU通过虚拟地址来访问主存<br>CPU芯片上得到内存管理单元MMU(memory management unit)负责地址翻译将虚拟地址转换为物理地址</p>
-<h3 id="虚拟内存"><a href="#虚拟内存" class="headerlink" title="虚拟内存"></a>虚拟内存</h3><p><strong>虚拟内存</strong>被组织为一个存放在<strong>磁盘</strong>上连续字节大小的单元组成的数组<br>每字节都有一个唯一的<strong>虚拟地址</strong>作为<strong>索引</strong><br>与其他层次的缓存一样磁盘上的数据也被划分成块,在主存与磁盘之间传输<br>虚拟内存被分割成固定大小的块,称<strong>虚拟页</strong>(virtual page)<br>在物理内存则称为<strong>物理页</strong>(physical page),大小相同<br>物理页也称作<strong>页帧</strong>(page frame)</p>
-<p>虚拟页面的集合被划分为三种</p>
-<ul>
-<li><strong>未分配的</strong> VM系统未分配&#x2F;创建的页 没有任何数据 也不占用磁盘空间</li>
-<li><strong>缓存的</strong> 这些虚拟页在物理内存中已缓存</li>
-<li><strong>未缓存的</strong> 未缓存在物理内存但实际上已分配的页</li>
-</ul>
-<p><strong>SRAM</strong>缓存指L1,L2,L3高速缓存<br>而我们使用<strong>DRAM</strong>来表示虚拟内存系统的缓存,他在主存中缓存虚拟页,把主存当做磁盘上划分出的虚拟页的缓存</p>
-<h4 id="页表"><a href="#页表" class="headerlink" title="页表"></a>页表</h4><p>VM系统必须能够判定一个虚拟页是否缓存在DRAM中,<br>如果是,还必须确定这一虚拟页放在哪个物理页中.<br>如果不命中,系统要判断该虚拟页在磁盘中的位置,并在物理内存中选择一个牺牲页,并用虚拟页替换掉<br>这些功能由软硬件联合提供,包括操作系统,MMU中的地址翻译硬件,与一个存放在物理内存中的<strong>页表</strong>(page table)</p>
-<p>页表将虚拟页映射到物理页,<strong>地址翻译硬件</strong>转换地址时会<strong>读取页表</strong><br><strong>操作系统</strong>负责<strong>维护页表</strong>的内容并在磁盘与DRAM之间<strong>传送页</strong></p>
-<p>每一个虚拟页都对应了一个<strong>页表条目</strong>(Page Table Entry)(即页表项)<br>PTE由一位有效位和n位地址字段组成</p>
-<ul>
-<li>设置了有效位 表示该页已缓存在DRAM中,地址字段表示其物理页的起始位置</li>
-<li>没有设置有效位 如果地址未空,表示该虚拟页未分配 不然表示虚拟页在磁盘上的起始位置</li>
-</ul>
-<p>DRAM缓存不命中成为缺页(page fault),这会触发一个缺页异常,调用内核的缺页异常处理程序,该程序选择一个牺牲页</p>
-<h4 id="局部性"><a href="#局部性" class="headerlink" title="局部性"></a>局部性</h4><p>由于局部性原理,这种页面调度工作的相当好<br>局部性原理保证了在任意时刻,程序趋向于在一个较小的活动页面集合上工作<br>称之为工作集(working set)或者常驻集合(resident set)<br>在缓存了这些集合中的页后,对这个工作集的引用都会导致命中<br>只要程序有好的时间局部性,虚拟内存工作系统就能工作得相当好</p>
-<p>然而如果时间局部性不够好,工作集的大小变得很大超出了物理内存的大小<br>则会产生抖动,页面不断地换进换出</p>
-<h4 id="如何管理内存"><a href="#如何管理内存" class="headerlink" title="如何管理内存"></a>如何管理内存</h4><p>虚拟内存大大简化了内存管理,并提供了自然地保护内存的方法</p>
-<ul>
-<li><strong>简化链接</strong> 操作系统为每一个进程都提供了一个独立的页表,因而也就是一个独立的虚拟地址空间,这允许每个进程的映像都使用相同的基本格式,例如64位地址空间而言代码段总是从虚拟地址0x40000开始.格式的一致性极大地简化了链接器的设计与实现</li>
-<li><strong>简化加载</strong> 把目标文件.text与.data节加载到新进程的过程中,加载器(loader)只需为代码与数据段分配虚拟页,标记为未被缓存的,将页表条目指向目标文件中的恰当位置,虚拟内存系统即可自动地按需调入数据页</li>
-<li><strong>简化共享</strong> 对于进程私有代码,操作系统会创建页表,把虚拟页映射到不同的物理页 在一些情况中,例如每个进程调用相同的内核代码,将不同进程中虚拟页面映射到相同的物理页,从而共享这段代码的一个副本</li>
-<li><strong>简化内存分配</strong> 当程序要求额外的堆空间时(如malloc),操作系统分配<strong>连续的虚拟内存页面</strong>,而可以把他们映射到<strong>物理内存</strong>中的<strong>任意位置</strong></li>
-</ul>
-<h4 id="内存保护"><a href="#内存保护" class="headerlink" title="内存保护"></a>内存保护</h4><p>如果对PTE添加一些许可位,如<strong>SUP,READ,WRTIE</strong>来标识这个页的是否需要内核态与对读写的控制<br>当指令违反了这些许可条件,CPU触发一个故障保护,控制传递给异常处理程序<br>Linux shell一般称这种异常为段错误(segmentation fault)</p>
-<h4 id="地址翻译"><a href="#地址翻译" class="headerlink" title="地址翻译"></a>地址翻译</h4><p>CPU中的<strong>页表基址寄存器PTBR</strong>(Page Table Base Register)指向页表<br>一个n位虚拟地址包含两部分:</p>
-<ul>
-<li>p位<strong>虚拟页面偏移</strong>VPO(Virtual Page Offset):代表所指页的页内偏移</li>
-<li>n-p位<strong>虚拟页号</strong>VPN(Virtual page Number):虚拟页号指向页表中的某一项</li>
-</ul>
-<p>MMU根据虚拟页号VPN来确定页表中的某一页表条目PTE<br>对于已缓存的虚拟页,其页表项中给出了<strong>物理页号</strong>PPN(Physical Page Number)<br>现在将<strong>物理页号</strong>PPN与<strong>页内偏移</strong>VPO拼在一起就可以得到<strong>物理地址</strong></p>
-<p>页面命中的过程如下</p>
-<ul>
-<li>处理器把虚拟地址传送给MMU</li>
-<li>MMU得到虚拟页号,向高速缓存&#x2F;主存请求读页表中的PTE</li>
-<li>高速缓存&#x2F;主存返回所请求的PTE</li>
-<li>MMU把PTE中得到的PPN与虚拟页号中的VPO拼在一起,构造出物理地址,传送给高速缓存&#x2F;主存</li>
-<li>高速缓存&#x2F;主存返回所请求的数据字给处理器</li>
-</ul>
-<p>页面命中完全由硬件处理,而对于不命中则需要操作系统内核协作完成</p>
-<ul>
-<li>处理器把虚拟地址传送给MMU</li>
-<li>MMU得到虚拟页号,向高速缓存&#x2F;主存请求读页表中的PTE</li>
-<li>高速缓存&#x2F;主存返回所请求的PTE</li>
-<li>PTE中有效位是0,触发缺页异常,控制传递给缺页异常处理程序</li>
-<li>缺页处理程序确定出物理内存的牺牲页,如果这个页面已被修改则换出到磁盘</li>
-<li>调入新的页面,更新页表中的PTE</li>
-<li>缺页处理程序返回到原来的进程,再次执行导致缺页的指令.CPU将虚拟地址重新发送给MMU.因为已把对应页换入内存,这会导致命中,接下来进入页面命中的流程</li>
-</ul>
-<h4 id="快表TLB"><a href="#快表TLB" class="headerlink" title="快表TLB"></a>快表TLB</h4><p>每次产生虚拟地址的过程MMU都要查PTE<br>在MMU中加入一个关于PTE的小缓存快表TLB(Translation Lookaside Buffer)来试图消除这样的开销<br>PTE保存着由单个PTE组成的块</p>
-<p>当TLB命中时,所有的地址翻译都在MMU中执行,非常快</p>
-<ul>
-<li>CPU传递虚拟地址</li>
-<li>MMU得到虚拟页号,查TLB得到所求PTE</li>
-<li>TLB返回请求的PTE</li>
-<li>MMU翻译出物理地址,传递给高速缓存&#x2F;主存</li>
-<li>高速缓存&#x2F;主存返回请求的数据字</li>
-</ul>
-<p>TLB不命中时,MMU需要从L1中取出所求PTE,并放入TLB.这可能会牺牲已有的PTE块</p>
-<p>TLB的<strong>索引与标记字段</strong>来自于虚拟地址的<strong>虚页号字段</strong><br>&lt;标记位&gt;&lt;索引位&gt;<VPO></p>
-<h4 id="多级页表"><a href="#多级页表" class="headerlink" title="多级页表"></a>多级页表</h4><p>假设地址空间32位,页面大小4KB,PTE大小4B<br>$\frac{2^{32}}{4*2^{10}}<em>4 &#x3D; 4</em>2^{20}&#x3D;4MB$<br>这意味着即便只引用一小部分虚拟地址空间,也需要4MB的页表常驻内存<br>如果地址空间64位,则需要$2^{54}B$的页表,我们无法承受这样的代价</p>
-<p>压缩页表的常用方法是使用层级结构的页表<br>以二级页表为例<br>一级页表中的每个PTE映射到一个二级页表<br>二级页表中的PTE才映射到物理内存<br>基于上述假设不变,<br>考虑一个大小为4KB的一级页表,<br>一级页表有$4KB&#x2F;4B&#x3D;1024$个PTE<br>每个一级PTE指向一个二级页表<br>每个二级页表大小4KB,也容纳1024个PTE,负责映射到物理内存<br>此时,一级页表与每个二级页表的页表</p>
-<p>大小与一个页面大小一样都是4KB<br>这从两个方面减少了内存要求</p>
-<ul>
-<li>如果一级页表的PTE为空,则其二级页表根本不会存在,从而节约了空间</li>
-<li>只有一级页表常驻主存,而只有常用的二级页表才会缓存在主存</li>
-</ul>
-<h4 id="端到端地址翻译"><a href="#端到端地址翻译" class="headerlink" title="端到端地址翻译"></a>端到端地址翻译</h4><p>P573,P577<br>(2022)P577原图</p>
-<p>Intel I7默认是4级页表<br>如:32位虚拟页号, 则每级页表32&#x2F;4&#x3D;9位</p>
-<h4 id="Linux虚拟内存系统"><a href="#Linux虚拟内存系统" class="headerlink" title="Linux虚拟内存系统"></a>Linux虚拟内存系统</h4><p>Linux缺页异常处理:</p>
-<ul>
-<li>该虚拟地址是否合法?若不合法,触发段错误(segment fault) 终止该进程</li>
-<li>该内存访问是否合法?若不合法,触发保护异常,终止该进程</li>
-<li>都合法,认为是缺页引起,进行缺页处理</li>
-</ul>
-<h3 id="共享与私有"><a href="#共享与私有" class="headerlink" title="共享与私有"></a>共享与私有</h3><p>不同进程的虚拟内存映射到物理内存的同一区域<br>私有对象采用<strong>写时复制</strong></p>
-<ul>
-<li>两个进程的私有对象映射到了同一个物理副本,标记该区域为<strong>私有的写时复制</strong></li>
-<li>在没有进程试图写该区域,则继续共享同一个副本</li>
-<li>当有进程试图写该区域,则触发故障保护</li>
-<li>在物理内存中创建所写页面的新副本,并更新页表指向这个新的副本页</li>
-<li>恢复这个新副本页的可写权限,这样这个新页面上的写操作就可以正常执行</li>
-</ul>
-<h3 id="内存分配"><a href="#内存分配" class="headerlink" title="内存分配"></a>内存分配</h3><p>2021: 简述内存释放并合并空闲块的过程<br>写出内存块释放与空闲块合并的C语言函数 加注释<br>可以使用题目给出的宏与宏函数</p>
-<h4 id="动态内存分配"><a href="#动态内存分配" class="headerlink" title="动态内存分配"></a>动态内存分配</h4><p>动态内存分配器(dynamic memory allocator)维护一个进程的虚拟内存区域:堆(heap)<br>内核维护一个变量brk(break),指向堆的顶部</p>
-<p>分配器视堆位一组不同大小的块(block)的集合 每个块是一个连续的虚拟内存片(chunk) 要么是<strong>已分配的</strong>,要么是<strong>空闲的</strong></p>
-<p>已分配的块显示地保留给应用程序使用,<strong>空闲块可以用来分配</strong><br>已分配的块可以被释放,这种释放可以使应用程序显示执行,也可以是内存分配器隐式执行的</p>
-<p>有两种风格:</p>
-<ul>
-<li><strong>显式分配器</strong>(explicit allocator) 要求应用显式地释放已分配的块 如C标准库提供malloc显示分配器 用free来释放</li>
-<li><strong>隐式分配器</strong>(implicit allocator) 要求分配器检测已分配块何时不再被使用并释放 也叫<strong>垃圾收集器</strong>(garbage collector) 自动释放已分配的块的过程叫<strong>垃圾收集</strong>(garbage collection) 如Java依赖垃圾收集来释放已分配的块</li>
-</ul>
-<h4 id="malloc与free"><a href="#malloc与free" class="headerlink" title="malloc与free"></a>malloc与free</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">void *malloc(size_t size);</span><br></pre></td></tr></table></figure>
-<p>malloc返回的指针指向大小至少为size字节的内存块<br>块可能为其内部的数据对象类型做对齐,64位下该地址通常是16的倍数<br>当malloc遇到问题:如要求的内存块过大 就返回NULL</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">void *sbrk(intprt_t incr);</span><br></pre></td></tr></table></figure>
-<p>sbrk通过将内核的brk指针增加incr来扩展或收缩堆<br>成功返回brk的旧值 失败返回-1</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">void free(void *ptr);</span><br></pre></td></tr></table></figure>
-<p>ptr必须指向malloc,calloc,realloc获得的已分配块的起始位置<br>不然free的行为将是未定义的 且什么都不返回,也不会告诉应用发生了错误</p>
-<h4 id="分配器的要求与目标"><a href="#分配器的要求与目标" class="headerlink" title="分配器的要求与目标"></a>分配器的要求与目标</h4><p>限制要求:</p>
-<ul>
-<li>只使用堆</li>
-<li>对齐块</li>
-<li>不破坏已分配的块</li>
-<li>立即响应请求</li>
-<li>任意的分配与释放序列</li>
-</ul>
-<p>性能目标:</p>
-<ul>
-<li>最大化吞吐量(单位时间内完成的请求数)</li>
-<li>最大化内存利用率</li>
-</ul>
-<p>在限制要求下,这两个性能目标通常是相互冲突的</p>
-<ul>
-<li>若希望吞吐率最大化,则使请求平均时间最小化</li>
-<li>峰值利用率 $U_k&#x3D;\frac{max_{i&lt;&#x3D;k}P_i}{H_k},P:payload;H:Heapsize$ 描述了前k+1个请求中利用率的最大值</li>
-</ul>
-<p>若想利用率最大化,就要尽量减少碎片,多合并空闲块,这意味着更复杂的分配策略,增大了分配时间<br>我们可以以堆利用率为代价写出吞吐率最大化的分配器:使用最简单的分配策略,最小化分配时间</p>
-<h4 id="碎片"><a href="#碎片" class="headerlink" title="碎片"></a>碎片</h4><ul>
-<li>内部碎片:一个已分配的块比有效载荷大</li>
-<li>外部碎片:没有一个单独的空闲块足够大承载载荷</li>
-</ul>
-<p><strong>外部碎片</strong>的量化要困难得多,且不可能预测,分配器通常采用启发式策略来<strong>维持少量的大空闲块</strong>,而不是维持大量的小空闲块</p>
-<h4 id="隐式空闲链表"><a href="#隐式空闲链表" class="headerlink" title="隐式空闲链表"></a>隐式空闲链表</h4><p>任何实际的分配器需要一些数据结构来区分<strong>块的边界,已分配或空闲</strong><br>大多数分配器将这些信息嵌入块本身</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">//一个简单的堆块格式</span><br><span class="line">29bit  :  头部,给出块大小</span><br><span class="line">3bit   :  其他信息,如区分已分配/空闲</span><br><span class="line">payload:  载荷</span><br><span class="line">(可选填充)</span><br></pre></td></tr></table></figure>
-<p>对这个结构做如下考虑:<br>双字(8B)对齐,则块的大小是8的倍数,块大小字段低3位一定是0<br>所以抽掉3bit用于状态其他信息: 0 0 a 用a指明已分配&#x2F;空闲</p>
-<p>考虑一个已分配的块,总大小为24B(0x18)</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">//其头部:</span><br><span class="line">0x00000018 | 0x1 = 0x00000019</span><br><span class="line">    1 1000</span><br><span class="line">+      001</span><br><span class="line">=   1 1001</span><br><span class="line">0x18+0x1=0x19</span><br></pre></td></tr></table></figure>
-
-<p>我们可以将堆组织为一个连续的已分配块和空闲块的序列 用隐式链表串联<br>空闲块通过头部的大小字段隐含地连接着<br>分配器可以遍历堆中所有的块从而间接遍历空闲块的集合</p>
-<p>我们还需要一个特殊的结束块:大小为0,标记位已分配的<strong>终止头部</strong>(terminating header)</p>
-<ul>
-<li>优点是简单</li>
-<li>缺点是任何操作的开销都要求对链表的搜索 搜索时间与块的总数成线性关系</li>
-</ul>
-<h4 id="放置策略"><a href="#放置策略" class="headerlink" title="放置策略"></a>放置策略</h4><p>找到一个足够大的空闲块放置请求</p>
-<p><strong>首次适配</strong>(first fit):选择第一个合适的空闲块</p>
-<ul>
-<li>倾向于把较大的空闲块保留在链表的后面</li>
-<li>缺点是靠近链表起始处留下小空闲块的碎片 增加了对较大块的搜索时间</li>
-</ul>
-<p><strong>下一次适配</strong>(next fit):在上一次查询结束的位置开始首次适配</p>
-<ul>
-<li>好处是跳过了首次适配前面可能造成的碎片 更快</li>
-<li>但内存利用率比首次适配低很多</li>
-</ul>
-<p><strong>最佳适配</strong>(best fit):检查所有空闲块,选能满足请求的最小块</p>
-<ul>
-<li>内存利用率最高</li>
-<li>但这要求对堆进行彻底的搜索</li>
-</ul>
-<h4 id="分割空闲块"><a href="#分割空闲块" class="headerlink" title="分割空闲块"></a>分割空闲块</h4><p>当找到一个匹配的空闲块 要做另一个策略决定:分配该块多少</p>
-<ul>
-<li>分配整个空闲块:造成内部碎片</li>
-<li>分割这个空闲块,分配一部分:产生外部碎片</li>
-</ul>
-<h4 id="额外堆内存"><a href="#额外堆内存" class="headerlink" title="额外堆内存"></a>额外堆内存</h4><p>如果找不到合适的空闲块:<br>一个选择是合并物理上相邻的空闲块来创建更大的空闲块<br>如果还是不够大,<br>则调用sbrk函数,向内核申请额外的堆内存 分配器把额外的内存转化为一个更大的空闲块,插入空闲链表</p>
-<h4 id="合并空闲块"><a href="#合并空闲块" class="headerlink" title="合并空闲块"></a>合并空闲块</h4><p>当一个已分配块被释放,其他空闲块与这个新释放的空闲块相邻,则引起一种现象:<strong>假碎片</strong>(fault fragmentation),许多可用的空闲块被切割成小的,无法使用的空闲块</p>
-<p>因此任何实际的分配器都必须<strong>合并</strong>(coalescing)相邻的空闲块<br>何时执行合并又是一个重要的策略决定</p>
-<ul>
-<li><strong>立即合并</strong>:块被释放时就合并所有的相邻块</li>
-<li><strong>推迟合并</strong>:等到某个稍晚的时候再合并(如直到某个分配请求失败再合并)</li>
-</ul>
-<p>立即合并很简单明了,可以在常数时间内完成<br>但对于某些请求模式会产生一种形式的抖动,块反复地合并又马上被分割<br><strong>快速的分配器</strong>通常会选择某种形式的<strong>推迟合并</strong></p>
-<h4 id="带边界标记的合并"><a href="#带边界标记的合并" class="headerlink" title="带边界标记的合并"></a>带边界标记的合并</h4><p>合并当前块的<strong>下一个块</strong>很简单,因为当前块的头部指向下一个块的头部,可以检查指针判断下一个块是否空闲<br><strong>合并前面的块</strong>则需要搜索整个链表,记住前面块的位置 这意味着每次free需要的时间与堆的大小成线性关系</p>
-<p>一种聪明而通用的技术:<strong>边界标记</strong>(boundary tag)<br>在每个块的结尾添加一个<strong>头部的副本</strong>:<strong>脚部</strong>(footer)<br>如果每个块都有这样一个脚部<br>则检查当前块开始位置的前一个字的位置,就得到了上一个块的脚部 从而判断上一个块的分配情况</p>
-<p>不过这也带来了显著的内存开销</p>
-<h4 id="显式空闲链表"><a href="#显式空闲链表" class="headerlink" title="显式空闲链表"></a>显式空闲链表</h4><p>对于隐式空闲链表,块分配与堆块的总数呈线性关系<br>对于通用的分配器,隐式空闲链表并不适合</p>
-<p>更好的方法是将空闲块组织为某种形式的<strong>显式数据结构</strong><br>堆可以组织为<strong>双向空闲链表</strong> 每个空闲块中都包含pred于succ</p>
-<p>首次适配的分配时间从<strong>块总数</strong>的线性时间减少到<strong>空闲块总数</strong>的线性时间</p>
-<h3 id="分配器实现"><a href="#分配器实现" class="headerlink" title="分配器实现"></a>分配器实现</h3><p>第一个字是双字边界对齐,不使用的<strong>填充字</strong><br>后面紧跟:<strong>序言块</strong>:8字节的已分配块,只有header与footer,初始化时创建,永不释放<br>以<strong>结尾块</strong>:大小为0的已分配块 结尾</p>
-<h4 id="内存模型系统"><a href="#内存模型系统" class="headerlink" title="内存模型系统"></a>内存模型系统</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">/*private global variables*/</span><br><span class="line">static char* mem_heap;      //指向堆的起始地址</span><br><span class="line">static char* mem_brk;       //指向堆的最后一字节+1</span><br><span class="line">static char* mem_max_addr;  //堆的最大合法地址+1</span><br><span class="line"></span><br><span class="line">/*Initialize*/</span><br><span class="line">void mem_init(void)&#123;</span><br><span class="line">    mem_heap = (char*)malloc(MAX_HEAP);</span><br><span class="line">    mem_brk = (char*)mem_heap;                  //初始化为堆起始地址</span><br><span class="line">    mam_max_addr = (char*)(men_heap+MAX_HEAP);  //指向最大合法地址+1</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/*sbrk implement*/</span><br><span class="line">void* mem_sbrk(int incr)&#123;       //一个简化版sbrk函数</span><br><span class="line">    char *old_brk=mem_brk;</span><br><span class="line">    //报错</span><br><span class="line">    if(incr&lt;0||(mem_brk+incr)&gt;mem_max_addr)&#123;</span><br><span class="line">        errono = ENOMEM;</span><br><span class="line">        fprintf(stderr,&quot;ERROR:mem-sbrk failed:ran out of memory.\n&quot;);</span><br><span class="line">        return (void*)-1;</span><br><span class="line">    &#125;</span><br><span class="line">    mem_brk+=incr;</span><br><span class="line">    return (void*)old_brk;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="常用函数与宏"><a href="#常用函数与宏" class="headerlink" title="常用函数与宏"></a>常用函数与宏</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">#define WSIZE 4             //字大小4B</span><br><span class="line">#define DSIZE 8             //双字double word 8B</span><br><span class="line">#define CHUNKSIZE (1&lt;&lt;12)   //扩展堆时的默认大小:2^12=4MB</span><br><span class="line"></span><br><span class="line">#define MAX(x,y)</span><br><span class="line"></span><br><span class="line">/*将块大小字段与已分配位拼接 用于header或footer*/</span><br><span class="line">#define PACK(size,alloc) ((size)|(alloc))</span><br><span class="line"></span><br><span class="line">/* </span><br><span class="line"> * 读取/写入p所指的字</span><br><span class="line"> * p典型地是一个(void*)指针</span><br><span class="line"> * 强转为unsigned int* 并读取p所指的字</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">#define GET(p) (*(unsigned int *)(p))</span><br><span class="line">#define PUT(p,val) (*(unsigned int*)(p) = (val))</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line"> * 读p所指的header或footer下SIZE字段与ALLOC位</span><br><span class="line"> * 在当前模型下header与footer刚好占1字</span><br><span class="line"> */</span><br><span class="line">#define GET_SIZE(p) (GET(p) &amp; ~0x7)</span><br><span class="line">#define GET_ALLOC(p) (GET(p) &amp; 0x1)</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line"> * 给定block ptr bp,计算它header/footer的地址</span><br><span class="line"> * bp指向有效载荷部分</span><br><span class="line"> */</span><br><span class="line">#define HDRP(bp) (char*)bp - WSIZE</span><br><span class="line">#define FTRP(bp) (char*)bp + GET_SIZE(HDRP(bp)) -DSIZE</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line"> * 前一个/后一个块的地址</span><br><span class="line"> */</span><br><span class="line">#define NEXT_BLKP(bp) ((char*)(bp) + GET_SIZE(HDRP(bp)))</span><br><span class="line">#define PREV_BLKP(bp) ((char*)(bp) - GET_SIZE(HDRP(bp) - WSIZE))</span><br></pre></td></tr></table></figure>
-
-<h4 id="初始化堆与扩展堆"><a href="#初始化堆与扩展堆" class="headerlink" title="初始化堆与扩展堆"></a>初始化堆与扩展堆</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">int mm_init(void)&#123;</span><br><span class="line">    if((heal_listp = mem_sbrk(4*WSIZE)) == (void*)-1)</span><br><span class="line">        return -1;</span><br><span class="line">    PUT(heap_listp,0);                          //填充块</span><br><span class="line">    PUT(heap_listp + 1 * WISZE,PACK(DSIZE,1));  //序言块header</span><br><span class="line">    PUT(heap_listp + 2 * WSIZE,PACK(DSIZE,1));  //序言块footer</span><br><span class="line">    PUT(heap_listp + 3 * WSIZE,PACK(0,1));      //结尾块</span><br><span class="line">    heap_listp += 2*WSIZE;</span><br><span class="line"></span><br><span class="line">    //分配一个块</span><br><span class="line">    if(extend_heap(CHUNKSIZE/WSIZE) == NULL)&#123;</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">static void* extend_heap(size_t words)&#123;</span><br><span class="line">    char *bp;</span><br><span class="line">    size_t size;</span><br><span class="line">    size = (word%2) ? (words+1)*WSIZE:words*WSIZE; //对齐</span><br><span class="line">    if((long)(bp=mem_sbrk(size))==-1)</span><br><span class="line">        return NULL;</span><br><span class="line"></span><br><span class="line">    PUT(HDRP(bp),PACK(size,0));</span><br><span class="line">    PUT(FTRP(bp),PACK(size,0));</span><br><span class="line">    PUT(HDRP(NEXT_BLKP(bp)),PACK(0,1));</span><br><span class="line"></span><br><span class="line">    //如果前一个块空闲则合并</span><br><span class="line">    return coalesce(bp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="释放与合并块"><a href="#释放与合并块" class="headerlink" title="释放与合并块"></a>释放与合并块</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">void mm_free(void *bp)&#123;</span><br><span class="line">    size_t size = GETSIZE(HDRP(bp));    //计算当前块大小</span><br><span class="line">    PUI(HDRP(bp),PACK(size,0));         //头部归0</span><br><span class="line">    PUT(FTRP(bp),PACK(size,0));         //尾部归0</span><br><span class="line">    coalesce(bp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">static void *coalesce(void *bp)&#123;</span><br><span class="line">    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp))); //前</span><br><span class="line">    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp))); //后</span><br><span class="line">    size_t size = GET_SIZE(HDRP(bp));                   //当前块大小</span><br><span class="line"></span><br><span class="line">    //前后不空</span><br><span class="line">    if(prev_alloc &amp;&amp; next_alloc) </span><br><span class="line">        return bp;</span><br><span class="line"></span><br><span class="line">    //前不空后空</span><br><span class="line">    if(prev_alloc &amp;&amp; !next_alloc)&#123;</span><br><span class="line">        size += GETSIZE(HDRP(PREV_BLKP(bp)));   //修改大小</span><br><span class="line">        PUT(HDRP(bp),PACK(size,0));             //修改头,释放并合并</span><br><span class="line">        PUT(FTRP(bp),PACK(size,0));             //重写尾</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //前空后不空</span><br><span class="line">    if(!prev_alloc &amp;&amp; next_alloc)&#123;</span><br><span class="line">        size += GETSIZE(HDRP(PREV_BLKP(bp)));   //修改大小</span><br><span class="line">        PUT(FTRP(bp),PACK(size,0));             //写尾</span><br><span class="line">        PUT(HDRP(PREV_BLKP(bp)),PACK(size,0));  //写头</span><br><span class="line">        bp = PREV_BLKP(bp);                     //bp前移</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //前后都空</span><br><span class="line">    if(!prev_alloc &amp;&amp; !next_alloc)&#123;</span><br><span class="line">        size += GETSIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(FTRP(NEXT_BLKP(bp)));   //HDRP与FTRP等价 此处为习惯写法</span><br><span class="line">        PUT(HDRP(PREV_BLKP(bp)),PACK(size,0));                                  //写前头</span><br><span class="line">        PUT(FTRP(NEXT_BLKP(bp)),PACK(size,0));                                  //写后尾</span><br><span class="line">        bp = PREV_BLKP(bp);                                                     //bp前移</span><br><span class="line">    &#125;</span><br><span class="line">    return bp;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>合并:共4个情况</p>
-<ul>
-<li>前空后空</li>
-<li>前空后不空</li>
-<li>前不空后空</li>
-<li>前后不空</li>
-</ul>
-<h4 id="分配块"><a href="#分配块" class="headerlink" title="分配块"></a>分配块</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">//向内存请求size大小的块</span><br><span class="line">void *mm_malloc(size_t size)&#123;</span><br><span class="line">    size_t asize;       //调整请求大小</span><br><span class="line">    size_t extendsize;  //拓展堆</span><br><span class="line">    char *bp;</span><br><span class="line"></span><br><span class="line">    if(size==0) return NULL;</span><br><span class="line"></span><br><span class="line">    //最小块大小为双字16B</span><br><span class="line">    if(size &lt; DSIZE)        //小于双字</span><br><span class="line">        asize = 2*DSIZE;    //调整为双字大小 并额外加一双字用于header与footer</span><br><span class="line">    else                    //加入开销字节,向上舍入到最接近8的整数倍</span><br><span class="line">        asize = DSIZE * ((size + DSIZE + DSIZE-1)/DSIZE); //wtf</span><br><span class="line"></span><br><span class="line">    if((bp=find_fit(asize)) !=NULL)&#123;</span><br><span class="line">        place(bp,asize);</span><br><span class="line">        return bp;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //没找到,拓展</span><br><span class="line">    extendsize = MAX(asize,CHUNKSIZE);</span><br><span class="line">    if((bp = extend_heap(extendsize/WSIZE))==NULL)  //拓展失败</span><br><span class="line">        return NULL;</span><br><span class="line">    place(bp,asize);</span><br><span class="line">    return bp;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="垃圾收集"><a href="#垃圾收集" class="headerlink" title="垃圾收集"></a>垃圾收集</h3><p>垃圾收集器是一种动态内存分配器 自动释放程序不再需要的块</p>
-<p>垃圾收集器将内存视为一张<strong>有向可达图</strong><br>图的结点被分为一组<strong>根节点</strong>与一组<strong>堆结点</strong><br><strong>堆结点</strong>对应了堆中的一个<strong>已分配块</strong><br>有向边 $p→q$ 意味着块p中的某个位置指向块q中的某个位置<br><strong>根节点</strong>对应了一种<strong>不在堆中</strong>的位置,包含指向堆的指针.这些位置可以使寄存器,栈里的变量</p>
-<p>当存在从根出发到达p的有向路径,称p结点可达<br>在任何时刻,不可达结点对应垃圾,不能被应用再次使用</p>
-<p>如Java的垃圾收集器堆如何应用和创建指针有很严格的控制,能够维护可达图的精准表示,也能回收所有垃圾<br>而如C,C++的收集器通常不能维持可达图的精准表示,这样的收集器也叫<strong>保守的垃圾收集器</strong><br>即一些不可达结点会被错误的标记位可达</p>
-
+<h3 id="物理与虚拟寻址"><a href="#物理与虚拟寻址" class="headerlink" title="物理与虚拟寻址"></a>物理与虚拟寻址</h3><p>CPU访问内存的最自然方式是使用物理寻址<br>早期的PC使用物理寻址,而现代处理器使用虚拟寻址<br>CPU通过虚拟地址来访问主存<br>CPU芯片上的内存管理单元MMU(memory management unit)负责地址翻译将虚拟地址转换为物理地址</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/01/17/CSAPP-9/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -474,7 +287,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2024-01-17 19:55:59 / 修改时间：19:57:14" itemprop="dateCreated datePublished" datetime="2024-01-17T19:55:59+08:00">2024-01-17</time>
+      <time title="创建时间：2024-01-17 19:55:59 / 修改时间：20:02:12" itemprop="dateCreated datePublished" datetime="2024-01-17T19:55:59+08:00">2024-01-17</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -500,172 +313,14 @@
 <p>简单的控制流是平滑的连续序列,每个指令Ik与Ik+1之间都是相邻的<br>这种平滑流的<strong>突变</strong>,即Ik与Ik+1不相邻通常由<strong>跳转</strong>,<strong>调用</strong>,<strong>返回</strong>等造成</p>
 <p>系统也必须要能对<strong>系统状态</strong>的变化做出反应,这些系统状态<strong>不是</strong>被内部程序变量捕获的,也不一定要与程序的执行相关:如<strong>硬件</strong>造成的突变</p>
 <p>现代系统通常<strong>使控制流发生突变</strong>来对这些情况做出反应,称这些<strong>突变</strong>为:<br><strong>ECF</strong>(Exceptional Control Flow)<strong>异常控制流</strong></p>
-<h3 id="异常"><a href="#异常" class="headerlink" title="异常"></a>异常</h3><p>异常(exception)由<strong>硬件</strong>与<strong>操作系统</strong>共同实现<br>它就是控制流的突变,用来相应处理器状态中的某些变化.</p>
-<p>系统为可能的异常都分配了一个唯一的非负整数<strong>异常号</strong><br>处理器得到设计者分配一些,操作系统内核分配一些<br>系统启动时,操作系统要分配和初始化称<strong>异常表</strong>的<strong>跳转表</strong>,表示了各个<strong>异常处理程序的地址</strong><br>当捕获到异常,就可以确定相应的异常号,然后触发异常,查表跳转到异常处理程序</p>
-<ul>
-<li>异常表的起始地址存放在<strong>异常表基址寄存器</strong>(exception table base register)</li>
-<li>异常处理程序运行在<strong>内核模式</strong>下</li>
-<li>类似过程调用,但根据异常类型,其返回地址要么是<strong>当前指令</strong>,要么是<strong>下一条指令</strong></li>
-</ul>
-<p>有四种类型</p>
-<table>
-<thead>
-<tr>
-<th align="left">类别</th>
-<th align="left">原因</th>
-<th align="left">同步&#x2F;异步</th>
-<th align="left">返回</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">中断 interrupt</td>
-<td align="left">来自I&#x2F;O设备信号</td>
-<td align="left">异步</td>
-<td align="left">下一条指令</td>
-</tr>
-<tr>
-<td align="left">陷阱 trap</td>
-<td align="left">有意的异常</td>
-<td align="left">同步</td>
-<td align="left">下一条指令</td>
-</tr>
-<tr>
-<td align="left">故障 fault</td>
-<td align="left">潜在可恢复的错误</td>
-<td align="left">同步</td>
-<td align="left">可能返回到当前指令(重新执行)</td>
-</tr>
-<tr>
-<td align="left">终止 abort</td>
-<td align="left">不可恢复的错误</td>
-<td align="left">同步</td>
-<td align="left">不返回</td>
-</tr>
-</tbody></table>
-<h4 id="中断"><a href="#中断" class="headerlink" title="中断"></a>中断</h4><p>中断是异步发生的,是来自处理器外部的I&#x2F;O信号的结果<br><strong>硬件中断</strong>不由任何指令造成,硬件中断的<strong>异常处理程序</strong>常常叫做<strong>中断处理程序</strong>(interrupt handler)</p>
-<ol>
-<li>执行某指令时，I&#x2F;O设备把异常号放到系统总线触发中断.</li>
-<li>在当前指令执行完成后,处理器注意到中断,读取中断号,执行其对应的中断处理程序</li>
-<li>处理程序返回,控制回到刚才指令的下一条指令</li>
-</ol>
-<p>程序会继续向后执行指令,就好像没有发生过中断一样</p>
-<h4 id="陷阱"><a href="#陷阱" class="headerlink" title="陷阱"></a>陷阱</h4><p>陷阱最重要的用途是在用户程序与内核之间提供一个像过程一样的接口:<strong>系统调用</strong><br>用户程序向内核请求服务,处理器提供了syscall n 指令<br>该指令会导致一个到异常处理程序的陷阱,该异常处理程序解析参数,调用适当的内核程序</p>
-<ol>
-<li>应用程序执行了一次系统调用</li>
-<li>控制传递给处理程序</li>
-<li>陷阱处理程序运行</li>
-<li>处理完成后返回给下一条指令</li>
-</ol>
-<p>之所以认为陷阱是异常,即”控制流的突变”,是因为使用了区别于用户态的内核提供的服务</p>
-<h4 id="故障与终止"><a href="#故障与终止" class="headerlink" title="故障与终止"></a>故障与终止</h4><p>由错误情况引起,可能被故障处理程序修正<br>如果可以修正,就返回引起故障的指令重新执行<br>否则将返回到内核的abort,引起<strong>终止</strong></p>
-<h3 id="Linux-86-64系统调用过程"><a href="#Linux-86-64系统调用过程" class="headerlink" title="Linux&#x2F;86-64系统调用过程"></a>Linux&#x2F;86-64系统调用过程</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">int main()&#123;</span><br><span class="line">    printf(&quot;hello,world\n&quot;);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>C程序用syscall函数直接调用系统调用,而对于大多数系统调用标准C库提供了包装函数.<br>这些包装函数将参数打包在一起,以适当的系统调用陷入内核,再返回回调用程序<br>其系统级函数版本如下</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">int main()&#123;</span><br><span class="line">    //arg1表示输出发给stdout</span><br><span class="line">    //arg2表示要写的内容</span><br><span class="line">    //arg3为要写的字节数</span><br><span class="line">    write(1,&quot;hello,world\n&quot;,13); </span><br><span class="line">    _exit(0); //return 0</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>汇编如下</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">.section .data</span><br><span class="line">string:</span><br><span class="line">    .ascii &quot;hello,world\n&quot;</span><br><span class="line">string_end:</span><br><span class="line">    .equ len, string_end - string</span><br><span class="line"></span><br><span class="line">.section .text</span><br><span class="line">.globl main</span><br><span class="line">main:</span><br><span class="line">    movq $1 %rax        //write的系统调用号是1</span><br><span class="line">    movq $1 %rdi        //参数1</span><br><span class="line">    movq $string,%rsi   //参数2</span><br><span class="line">    movq $len,%rdx      //参数3</span><br><span class="line">    syscall             //执行系统调用</span><br><span class="line"></span><br><span class="line">    movq $60,%rax       //_exit的系统调用号为60</span><br><span class="line">    movq $0,%rdi        //参数1</span><br><span class="line">    syscall             ////执行系统调用</span><br></pre></td></tr></table></figure>
-
-<h3 id="进程"><a href="#进程" class="headerlink" title="进程"></a>进程</h3><p><strong>异常</strong>允许了操作系统内核提供<strong>进程</strong>(process),允许控制流在不同程序之间乱跳</p>
-<p>而对于程序自己而言仿佛在独占地使用处理器与内存,<br>处理器仿佛在无间断地执行程序中的指令,其代码与数据防腐蚀系统内存中的唯一对象<br>这些假象都由<strong>进程</strong>提供</p>
-<p>其经典定义为:一个执行中的程序实例<br>每个<strong>程序运行在</strong>某个<strong>进程的上下文</strong>(context)中<br>上下文由运行它所需要的<strong>状态</strong>组成,包括 内存中的代码与数据,栈,通用寄存器的内容,PC,环境变量,文件描述符等</p>
-<p>在shell中输入一个可执行目标文件的名字,运行程序时就会创建一个新的进程,在这个进程的上下文中运行它。</p>
-<p>进程给应用程序提供了关键抽象:</p>
-<ul>
-<li>独立的逻辑控制流</li>
-<li>私有的地址空间</li>
-</ul>
-<h4 id="逻辑控制流"><a href="#逻辑控制流" class="headerlink" title="逻辑控制流"></a>逻辑控制流</h4><p>程序运行时一系列PC的值唯一对应了包含可执行目标文件中的指令,或者动态链接库中对象的指令<br>这个PC值的序列叫做<strong>逻辑控制流</strong></p>
-<p>处理器的一个<strong>物理控制流被划分成多个逻辑控制流</strong>,<br>进程轮流使用处理器时,每个进程执行它的流的一部分然后被抢占(preempted),轮到其他进程<br>对于运行在进程上下文中的程序,看上去就仿佛在独占地使用处理器(只关注自己的逻辑流)</p>
-<h4 id="并发流"><a href="#并发流" class="headerlink" title="并发流"></a>并发流</h4><p>如果两条逻辑控制流在时间上重叠,就称他们为<strong>并发流</strong>(concurrent flow)</p>
-<p>并发并<strong>不要求</strong>处理器和数或计算机数,只要时间重叠就称并发<br>如果两个流并发地运行在不同的处理器核或计算机上,称<strong>并行流</strong>(parallel flow)</p>
-<h4 id="私有地址空间"><a href="#私有地址空间" class="headerlink" title="私有地址空间"></a>私有地址空间</h4><p>进程为每个程序提供了自己的私有地址空间,一般而言不允许其他进程读写<br>不过这样的空间有着相同的通用结构 P510 :经典的程序在内存中结构图</p>
-<h4 id="用户模式与内核模式"><a href="#用户模式与内核模式" class="headerlink" title="用户模式与内核模式"></a>用户模式与内核模式</h4><p>处理器应该提供机制,<strong>限制</strong>一个应用可以执行的指令与可以访问的地址空间范围<br>这样操作系统内核才能提供一个无懈可击的进程抽象</p>
-<p>处理器在通常在某个控制寄存器中的一个模式位(mode bit)提供这种功能<br>该寄存器描述了当前进程享有的特权<br>如果设置了模式位就认为其运行在内核模式(有时也叫超级用户模式)<br>不然认为在用户模式.不允许执行特权指令(privileged instruction)<br>用户程序只能通过系统调用接口间接地访问内核代码与数据</p>
-<p>运行应用程序代码的进程初始运行在用户模式<br>其进入内核模式的唯一方法就是通过异常,执行异常处理程序(其在内核中)<br>返回后,处理器再把模式改回用户模式</p>
-<h4 id="上下文切换"><a href="#上下文切换" class="headerlink" title="上下文切换"></a>上下文切换</h4><p>内核使用<strong>上下文切换</strong>(context switch)的异常控制流来<strong>实现多任务</strong><br>上下文是内核重新启动一个被抢占的进程所需的状态,它由一些对象的值构成<br>内核抢占当前进程,重启先前被抢占了的进程,称<strong>调度</strong></p>
-<ol>
-<li>保存当前进程的上下文</li>
-<li>恢复先前被抢占进程的上下文</li>
-<li>控制传递</li>
-</ol>
-<h4 id="进程控制"><a href="#进程控制" class="headerlink" title="进程控制"></a>进程控制</h4><p>进程ID:每个进程有唯一的正数ID</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pid_t getpid(void);     //返回调用进程ID</span><br><span class="line">pid_t getppid(void);    //返回父进程ID</span><br></pre></td></tr></table></figure>
-
-<p>创建与终止:进程总是处于下面三种状态之一</p>
-<ul>
-<li><strong>运行</strong> 要么在被执行,要么在等待调度</li>
-<li><strong>停止</strong> 执行被挂起,且不会被调度 保持停止</li>
-<li><strong>终止</strong> 永远地停止:1.受到终止进程的信号 2.从主程序返回 3.调用了exit函数</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">void exit(int status);  //终止进程</span><br></pre></td></tr></table></figure>
-
-<p>子进程</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pid_t fork(void);   //父进程创建子进程</span><br></pre></td></tr></table></figure>
-<p>子进程得到父进程的用户级虚拟地址空间的一个副本,包括数据代码段,堆栈,共享库,文件描述符<br>这意味着子进程可以读写父进程打开的任何文件<br>其最大的区别就是pid不一样</p>
-<h4 id="fork函数"><a href="#fork函数" class="headerlink" title="fork函数"></a>fork函数</h4><p>fork被调用一次,却会返回两次<br>一次在父进程中,一次在新建的子进程中</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">int main()&#123;</span><br><span class="line">    pid_t pid;</span><br><span class="line">    int x = 1;</span><br><span class="line"></span><br><span class="line">    pid = Fork();</span><br><span class="line">    //在子进程中返回0,这样就区分出程序在子进程执行还是在父进程执行</span><br><span class="line">    if(pid == 0)&#123;</span><br><span class="line">        printf(&quot;child : x=%d\n&quot;,++x);</span><br><span class="line">        exit(0);</span><br><span class="line">    &#125;</span><br><span class="line">    //父进程返回子进程PID,非零</span><br><span class="line">    printf(&quot;parent ： x=%d\n&quot;,--x);</span><br><span class="line">    exit(0);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>结果:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">parent : x=0</span><br><span class="line">child  : x=2</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>调用一次,返回两次</li>
-<li><strong>并发执行</strong>:子进程与父进程是<strong>并发的独立进程</strong>,内核可以凭喜好交替执行逻辑控制流中的指令 无法对不同进程中的指令交替执行做任何假设</li>
-<li>地址空间<strong>相同但独立</strong> 进程地址空间只是内容相同(堆栈,变量,代码都相同),但独立,有各自的私有地址空间.对x的改变是独立的,不会反应在另一进程的内存中</li>
-<li><strong>共享文件</strong> 子父进程都把x打在屏幕上,因为子进程继承了父进程所有的打开文件,当父进程调用fork时stdout文件时打开并指向屏幕,子进程继承它,输出也指向屏幕</li>
-</ul>
-<p>画进程图 P515 将有助于理解嵌套fork调用的程序</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">int main(void)&#123;</span><br><span class="line">    Fork();</span><br><span class="line">    Fork();</span><br><span class="line">    printf(&quot;hello,world\n&quot;);</span><br><span class="line">    exit(0);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>将创建4个进程</p>
-<p>执行fork时,内核为新锦成创建了虚拟内存并标记内存区域为私有的写复制 但此时仍共享一个副本<br>直到随后的写操作触发写时复制,新进程获得了独立的物理页面</p>
-<h4 id="进程回收"><a href="#进程回收" class="headerlink" title="进程回收"></a>进程回收</h4><p>进程因某种原因终止时,内核并不立刻将其清除<br>而是保持在已终止的状态,直到它的<strong>父进程回收</strong>(reaped)它</p>
-<p>父进程回收终止的子进程时,内核抛弃已终止的子进程,它不再存在.<br>终止了还未回收的进程成僵死进程(zombie)</p>
-<p>如果父进程终止了,内核会安排<strong>init进程</strong>成为它的孤儿进程的养父<br>init进程的<strong>pid是1</strong>,系统启动时由<strong>内核创建</strong>,<strong>不会终止</strong>,所有进程的祖先<br>如果父进程终止时还有未回收的僵死子进程,则安排init去回收</p>
-<p>对于长时间运行的程序(如服务器,shell),应总是回收他们僵死的子进程</p>
-<p>waitpid</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">//默认返回子进程PID options=WHOHANG返回0 错误返回-1</span><br><span class="line">//默认option = 0,</span><br><span class="line">//挂起调用它的进程,直到**等待集合**中的一个**子进程终止**</span><br><span class="line">//pid&gt;0,表示等待该子进程终止</span><br><span class="line">//pid=-1,表示等待父进程所有的子进程</span><br><span class="line">pid_t waitpid(pid_t pid,int *statusp,int options);</span><br><span class="line"></span><br><span class="line">//wait是简单版本,成功返回子进程PID 等价于waitpid(-1,&amp;status,0)</span><br><span class="line">pid_t wait(int *statusp)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>option改为 WHOHANG,表示如果调用时任何子进程都没有终止,就立刻返回0,不等待</p>
-<p>status参数的几个宏</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">//如果子进程调用exit或一个return正常终止,返回1</span><br><span class="line">WIFEXITED(status);</span><br><span class="line"></span><br><span class="line">//返回一个正常终止的子进程的退出状态 exit(int status)</span><br><span class="line">WEXISTSTATUS(status);</span><br></pre></td></tr></table></figure>
-<h4 id="进程休眠"><a href="#进程休眠" class="headerlink" title="进程休眠"></a>进程休眠</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">//让进程挂起指定的时间</span><br><span class="line">unsigned int sleep(unsigned int secs);</span><br><span class="line"></span><br><span class="line">//让调用函数休眠,直到进程收到一个信号</span><br><span class="line">int pause(void);</span><br></pre></td></tr></table></figure>
-
-<h4 id="加载并运行"><a href="#加载并运行" class="headerlink" title="加载并运行"></a>加载并运行</h4><p>execve不返回 除非出错</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">//加载并运行可执行目标文件filename,带有参数列表与环境变量</span><br><span class="line">//只有出错时返回,不然不返回</span><br><span class="line">int execve(const char *filename,const char*argv[],const char *envp[]);</span><br></pre></td></tr></table></figure>
-<p>在execve加载了filename后,加载器(loader)设置启动栈,把控制传递给新程序的主函数main</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc,char **argv,char **envp)</span><br></pre></td></tr></table></figure>
-
-<h4 id="程序与进程"><a href="#程序与进程" class="headerlink" title="程序与进程"></a>程序与进程</h4><p>程序是一堆代码与数据,进程是执行中一个程序的实例<br>程序总是运行在进程的上下文中<br>fork函数在新的子进程中运行相同的程序,他是父进程的复制品<br>execve函数在当前进程的上下文中加载并运行一个程序,他会<strong>覆盖当前进程的地址空间</strong>,<strong>没有创建新的进程</strong><br>新的程序仍然有相同得到PID,并继承了调用execve函数时已打开的文件描述符<br>新程序的代码和数据成为当前进程的代码和数据</p>
-<p>如果执行一个helloworld程序:简答 期末题6分,一点一分,还可以再加入虚拟内存翻译的内容</p>
-<ul>
-<li>shell接收命令</li>
-<li>shell首先fork出一个子进程</li>
-<li>子进程执行execve加载helloworld程序</li>
-<li>执行程序中若发现有页面未在内存 执行缺页中断程序</li>
-<li>如果发生了缺页中断,缺页中断处理程序负责把页面调入内存,同时可能会选择页面换出内存</li>
-<li>程序执行时,执行printf函数的动态链接</li>
-<li>程序结束后,由父进程负责回收子进程资源</li>
-</ul>
-<h3 id="信号"><a href="#信号" class="headerlink" title="信号"></a>信号</h3><p>信号(singal)就是一个小消息,它允许进程和内核中断其他进程</p>
-<h4 id="发送信号"><a href="#发送信号" class="headerlink" title="发送信号"></a>发送信号</h4><ul>
-<li>内核检测到一个系统事件(如除0)</li>
-<li>一个进程调用了kill函数,显式地要求内核发送信号给目的进程.(也可以发送给自己)</li>
-</ul>
-<h4 id="接收信号"><a href="#接收信号" class="headerlink" title="接收信号"></a>接收信号</h4><p>目的进程被内核强迫对信号的发送做出反应时,它就接受了信号</p>
-<p>进程可以</p>
-<ul>
-<li>忽略这个信号</li>
-<li>终止</li>
-<li>执行<strong>信号处理程序</strong>(signal handler)的用户层函数捕获它</li>
-</ul>
-<p>一个发出但没有被接受的信号称<strong>待处理信号</strong>(pending signal)<br>任何时刻<strong>一种信号</strong>至多只会有一个待处理信号<br>对目的进程发送<strong>重复类型的待处理信号</strong>会被简单<strong>丢弃</strong>,不会排队等待<br>进程可以选择性的阻塞某类型的信号 被阻塞的信号仍可发送,但不会被接受</p>
-<h4 id="Ctrl-C"><a href="#Ctrl-C" class="headerlink" title="Ctrl+C"></a>Ctrl+C</h4><ul>
-<li>键下Ctrl+C的作用: 发送<strong>SIGINT</strong>给前台进程组的每个进程 默认行为是<strong>终止</strong></li>
-</ul>
-<h4 id="信号处理程序"><a href="#信号处理程序" class="headerlink" title="信号处理程序"></a>信号处理程序</h4><ul>
-<li>处理程序要尽可能简单</li>
-<li>只调用异步信号安全的函数</li>
-<li>用volatile声明全局变量(编译器不会缓存)</li>
-</ul>
-<h3 id="非本地跳转"><a href="#非本地跳转" class="headerlink" title="非本地跳转"></a>非本地跳转</h3><p>setjump <strong>调用一次可多次返回</strong><br>C语言提供的用户级异常控制流<br>将控制直接从一个函数转移到另一个正在执行的函数,而不通过调用返回序列</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/01/17/CSAPP-8/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -721,7 +376,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2024-01-17 19:55:59 / 修改时间：19:56:58" itemprop="dateCreated datePublished" datetime="2024-01-17T19:55:59+08:00">2024-01-17</time>
+      <time title="创建时间：2024-01-17 19:55:59 / 修改时间：20:02:07" itemprop="dateCreated datePublished" datetime="2024-01-17T19:55:59+08:00">2024-01-17</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -745,156 +400,14 @@
     <div class="post-body" itemprop="articleBody">
           <h2 id="第七章-链接"><a href="#第七章-链接" class="headerlink" title="第七章 链接"></a>第七章 链接</h2><h3 id="GNU-GNU-is-Not-Unix"><a href="#GNU-GNU-is-Not-Unix" class="headerlink" title="GNU:GNU is Not Unix"></a>GNU:GNU is Not Unix</h3><p>GNU是一个历史悠久的大型项目,旨在开发一个开源的类Unix操作系统<br>GNU工具链逐渐被发明出来,其中包括了编译器,汇编器,调试器等<br>其中最著名的是<strong>GCC</strong>:GNU Compiler Collection<br>但始终没有自己的内核,直到Linux被发明<br>Linux内核与GNU工具链紧密结合,日后也称GNU&#x2F;Linux</p>
 <p>GNU中的G,gnu,是一种动物:牛羚,角马,也是其吉祥物</p>
-<h3 id="编译器驱动程序"><a href="#编译器驱动程序" class="headerlink" title="编译器驱动程序"></a>编译器驱动程序</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"># 召唤gcc,以main.c和sum.c为目标生成prog</span><br><span class="line"># -o用于指示输出文件的名字</span><br><span class="line"># -Og是optimize for debugging,旨在提供不破坏调试能力的优化</span><br><span class="line"># 使用更高级的优化会导致严重破坏可读性进而难以调试</span><br><span class="line"># 直接使用gcc会直接生成可执行目标文件</span><br><span class="line">gcc -Og -o prog main.c sum.c</span><br><span class="line"></span><br><span class="line"># 按照步骤生成如下: 预处理-&gt;编译-&gt;汇编-&gt;链接</span><br><span class="line"></span><br><span class="line"># cpp,C Pre-Processor 预处理</span><br><span class="line">cpp main.c -o main.i</span><br><span class="line"></span><br><span class="line"># cc1,C Compiler part1 编译</span><br><span class="line">cc1 main.i -o main.s</span><br><span class="line"></span><br><span class="line"># as,Assembler 汇编</span><br><span class="line">as main.s -o main.o</span><br><span class="line"></span><br><span class="line"># ld,linker 链接 d是啥我也不知道</span><br><span class="line">ld -o prog main.o sum.o</span><br><span class="line"></span><br><span class="line"># Linux下执行prog</span><br><span class="line">./prog</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">如果使用gcc命令也可以</span><br><span class="line"></span><br><span class="line">gcc -E :预处理：PreprocEss</span><br><span class="line">gcc -S :编译:compile to asSembly</span><br><span class="line">gcc -c :汇编:compile</span><br><span class="line"></span><br><span class="line">进行链接时:</span><br><span class="line">gcc main.o sum.o -o prog</span><br></pre></td></tr></table></figure>
-
-<h3 id="ELF可重定位文件格式"><a href="#ELF可重定位文件格式" class="headerlink" title="ELF可重定位文件格式"></a>ELF可重定位文件格式</h3><p>ELF:Executable and Linkable Format 现代Linux和Unix使用的格式</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">ELF头      :描述了生成该文件的系统的字长,字节顺序(大小端),与其他信息</span><br><span class="line">.text      :已编译的机器代码,指令,函数等</span><br><span class="line">.rodata    :read only data</span><br><span class="line">.data      :初始化的全局/静态C变量;局部变量保存在栈,不存在于.data与.bss</span><br><span class="line">.bss       :未初始化的全局/静态变量。与被初始化为0的全局/静态变量</span><br><span class="line">.symtab    :符号表,定义和引用的函数/全局变量信息</span><br><span class="line">.rel.text  :relocate 一个.text节中位置的列表 链接时修改这些位置</span><br><span class="line">.rel.data  :被引用或定义的所有全局变量的重定位信息</span><br><span class="line">.debug     :调试符号表 只有gcc -g时才存在这张表</span><br><span class="line">.line      :C源程序的行号与.text节中机器指令之间的映射 -g时才存在</span><br><span class="line">.strtab    :字符串表,包含了.symtab与.debug节中的符号表.</span><br><span class="line">节头部表    :不同节的位置与大小,数量 目标文件的每个节有固定大小的条目</span><br></pre></td></tr></table></figure>
-
-<p>bss:Block Storage Start,块存储开始,始于IBM汇编语言<br>一个更好的解释是:Better Save Space,更好地节省空间<br>所以初始化为0也算入.bss</p>
-<p>.bss与.data存<strong>强符号</strong><br><strong>弱符号</strong>(未定义的全局变量)在符号表中记录为<strong>伪节COMMON</strong></p>
-<h3 id="符号与符号表"><a href="#符号与符号表" class="headerlink" title="符号与符号表"></a>符号与符号表</h3><p>每个可重定位文件都可以视为一个目标模块<br>在链接的过程中,需要进行符号解析.<br>每个<strong>符号</strong>对应一个<strong>函数</strong>,<strong>全局变量</strong>或者<strong>static变量</strong>,<br>符号解析的目的是把每个符号引用与其符号定义关联起来。</p>
-<blockquote>
-<p>static意味着该函数或变量只能被该文件调用,这意味着它不会被其他文件调用</p>
-</blockquote>
-<p>有三种不同的符号:</p>
-<ul>
-<li>由模块m所定义,并可被其他模块引用的<strong>全局符号</strong>.对应<strong>非静态的</strong>C函数与全局变量</li>
-<li>模块m所引用的,被其他模块定义的符号,称<strong>外部符号</strong>.对应其他模块中定义的<strong>非静态的</strong>C函数与全局变量</li>
-<li>只被模块m定义和引用的<strong>局部符号</strong> 对应带static的C函数与全局变量</li>
-</ul>
-<p>.symtab中的符号表不包含<strong>本地非静态程序变量</strong>(局部变量),这些符号在栈中被管理<br>除非他被static修饰,被static修饰意味着它的生命周期贯穿程序始终</p>
-<p>而带有static的本地变量不在栈中管理,编译器在.data与.bss中为它们分配空间,并加入符号表</p>
-<h3 id="符号表条目"><a href="#符号表条目" class="headerlink" title="符号表条目"></a>符号表条目</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">int f()&#123;             //在符号表里 加入.text</span><br><span class="line">    static int x=0;  //static 在符号表里,已初始化变量,但是0,加入.bss</span><br><span class="line">    return x;</span><br><span class="line">&#125;</span><br><span class="line">int g()&#123;            //在符号表里 加入.text</span><br><span class="line">    static int x=1; //static 在符号表里,已初始化变量,不是0,加入.data</span><br><span class="line">    return x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以用x.1表示f中的定义,x.2表示g中的定义</p>
-<p>符号表<strong>条目</strong>结构如下:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">typedef struct&#123;</span><br><span class="line">    int name;       //字符串表中的字符偏移,指向某串字符串</span><br><span class="line">    char type:4,    //类型,是函数还是数据</span><br><span class="line">         binding:4; //说明本地或全局</span><br><span class="line">    char reserved;  //保留,unused</span><br><span class="line">    short section;  //该符号被分配到哪个节</span><br><span class="line">    long value;     //节内偏移</span><br><span class="line">    long size;      //大小</span><br><span class="line">&#125;ELF64_Symbol;</span><br></pre></td></tr></table></figure>
-<p>在可重定位目标文件中,在符号表项的section字段有三个特殊的伪节。<br>这些节在节头部表中没有条目。<br>ASB: absolute,绝对的,不应该被重定位的符号<br>UNDEF: 未定义的,在本模块中引用,却在其他模块定义的符号<br>COMMON: 一般的 表示没有被分配位置的未初始化数据目标<br>可执行文件中没有这些伪节(已重定位处理)</p>
-<p>现代gcc按以下规则分配:<br>COMMON伪节 :未初始化的<strong>全局变量</strong><br>.bss :未初始化的静态变量,以及初始化为0的全局&#x2F;静态变量(better saving space)<br>未初始化的全局变量被认为是<strong>弱符号</strong>,所以放进COMMON</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Num:            Value  Size    Type   Bind    Vis      Ndx  Name</span><br><span class="line">  8: 0000000000000000    24    FUNC   GLOBAL  DEFAULT    1  main</span><br><span class="line">  9: 0000000000000000     8    OBJECT GLOBAL  DEFAULT    3  array</span><br><span class="line"> 10: 0000000000000000     0    NOTYPE GLOBAL  DEFAULT  UND  sum</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>Ndx为section索引<br>全局符号main(函数) 位于.text节中偏移0处 大小24字节<br>全局符号array(数据)位于.data节中偏移0处 大小8字节<br>未定义符号sum(无类型) 位于伪节UND(undefined)</p>
-<h3 id="符号解析"><a href="#符号解析" class="headerlink" title="符号解析"></a>符号解析</h3><p>每个引用与符号表中的一个符号定义关联起来.<br>对于<strong>局部符号</strong>(自己定义自己引用),静态局部变量:编译器只需创建本地链接器符号,保证它们的名字唯一</p>
-<p>而对于<strong>全局符号</strong>的引用解析会很棘手:<br>当编译器遇到不在当前模块定义的符号,就假设该符号由其他模块定义(外部符号),<br>生成链接器符号表条目,交给链接器.<br>在链接中,如果任何模块中找不到这个被引用符号的定义,就报错.</p>
-<h4 id="多重定义的全局符号"><a href="#多重定义的全局符号" class="headerlink" title="多重定义的全局符号"></a>多重定义的全局符号</h4><p>如果多个模块定义了同名的全局符号?</p>
-<ul>
-<li>认为:<strong>函数</strong>,<strong>已初始化的全局变量</strong>是<strong>强符号</strong></li>
-<li>认为:未初始化的全局变量是<strong>弱符号</strong></li>
-</ul>
-<p>采用以下规则:</p>
-<ol>
-<li>不允许多个同名的<strong>强符号</strong>(函数与已赋值全局变量)</li>
-<li>强符号与弱符号<strong>重名</strong>,选择<strong>强符号</strong></li>
-<li>多个<strong>弱符号同名</strong>,在弱符号中<strong>任选</strong>一个</li>
-</ol>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">/*foo1.c*/</span><br><span class="line">int main(void)&#123;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/*bar1.c*/</span><br><span class="line">int main()&#123;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在两个模块中main都是强符号,这会报错:强符号被重复定义</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">/*foo2.c*/</span><br><span class="line">int x =15213;</span><br><span class="line">int main()&#123;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/*bar2.c*/</span><br><span class="line">int x =15213;</span><br><span class="line">void f()&#123;&#125;</span><br></pre></td></tr></table></figure>
-<p>两个模块中已初始化的x为强符号,重名,报错</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">/*foo3.c*/</span><br><span class="line">int x =15213;</span><br><span class="line">int main()&#123;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/*bar3.c*/</span><br><span class="line">int x;</span><br><span class="line">void f()&#123;</span><br><span class="line">    x=15212;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>此时,foo3.c中的x是强符号,而bar3.c中的x为弱符号<br>选择强符号:x &#x3D; 15213;<br>在链接后bar3.c的f()将会把x&#x3D;15213改成15212.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">/*foo5.c*/</span><br><span class="line">#include&lt;stdio.h&gt;</span><br><span class="line">void f(void);</span><br><span class="line">int y = 15212;</span><br><span class="line">int x = 15213;</span><br><span class="line">int main(void)&#123;</span><br><span class="line">    f();</span><br><span class="line">    printf(&quot;x= 0x%x y=0x%x \n&quot;,x,y);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/*bar5.c*/</span><br><span class="line">double x;</span><br><span class="line">void f()&#123;</span><br><span class="line">    x = -0.0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>当一强一弱,又遇到类型不同: int 4B,double 8B<br>链接时,选择强符号int x &#x3D; 15213;<br>内存如下:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">address  :type  data</span><br><span class="line">0x601020 :int   x</span><br><span class="line">0x601024 :int   y</span><br></pre></td></tr></table></figure>
-<p>此时,bar5.c中的f()将x赋值双精度的-0.0<br>大小8B<br>这将覆盖整个x与y所在的地址</p>
-<p>所以在编译时,遇到未定义的全局符号(<strong>弱符号</strong>),我们无法预测链接器使用多重定义中的哪一个,所以把它分配进<strong>伪节COMMON</strong>,留给链接器决定采用哪一个弱符号<br>如果遇到<strong>强符号</strong>,我们有足够的自信将其<strong>分配为.data与.bss</strong> 如果其他模块中重复定义了强符号直接报错即可,如果其他模块中重复定义的是弱符号,则取强符号.</p>
-<h3 id="静态库链接"><a href="#静态库链接" class="headerlink" title="静态库链接"></a>静态库链接</h3><p>静态库:把所有目标模块打包,用作链接器的输入</p>
-<ul>
-<li>如果把所有标准函数打包成一个可重定向目标模块:浪费内存资源</li>
-<li>如果拆分成不同的可重定向目标模块:需要显式指定链接谁:麻烦</li>
-</ul>
-<p>所以:把相关的目标模块打包在一起<br>只复制被程序引用的目标模块到可执行文件</p>
-<blockquote>
-<p>简答题 什么是静态库 优点是什么 P475<br>编译时把相关的目标模块打包成一个单独的文件用作链接器的输入,称这个文件为静态库<br>使用时,通过把相关函数编译成独立模块并封装在一个单独的静态库文件,在命令行上指定单独的文件名来使用这些在库中定义的函数,链接器只需要复制被引用的目标模块,减少了可执行文件的大小.同时应用程序员只需要包含较少库文件的名字</p>
-</blockquote>
-<p>Linux下静态库以存档(archive)格式存放,后缀.a<br>如C标准库:libc.a 数学库:libm.a<br>实际上C编译器驱动程序总是传送libc.a给链接器,可以不显式给出</p>
-<p>使用:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">gcc -c main.c -o main.o</span><br><span class="line">gcc -static -o prog main.o ./libvector.a</span><br><span class="line">//也可以:</span><br><span class="line">gcc -static -o prog main.o -L. -lvector</span><br><span class="line">// -static指建立完全链接的可执行文件,可直接加载到内存运行,无需进一步链接</span><br><span class="line">// -L表示在当前目录下找链接库</span><br></pre></td></tr></table></figure>
-<p>链接器运行时,认定main.c引用了libvector.a中的addvec.o定义的addvec符号<br>于是复制addvec.o到可执行文件,没有被引用的则不管</p>
-<h3 id="链接器的命令解析"><a href="#链接器的命令解析" class="headerlink" title="链接器的命令解析"></a>链接器的命令解析</h3><p>链接器从左到右按照命令行上的顺序扫描可重定位目标文件与archive文件</p>
-<blockquote>
-<p>gcc [file] [archive]</p>
-</blockquote>
-<p>定义集合E(executive),U(undefined),D(defined)<br>E存放我们认定链接在一起的目标模块<br>U表示未被定义的符号集合<br>D表示已被定义的符号集合<br>一开始,E,U,D都为空</p>
-<ol>
-<li>若读入一个输入文件(.o),则加入E,解析其符号定义与引用,并修改U与D</li>
-<li>若读入一个存档文件(.a),则在U中匹配未解析的符号,找到匹配的符号,加入库中对应的目标文件(.o)到E,并修改U与D</li>
-<li>从左到右依次解析,若符号全都匹配成功,此时U为空,合并E中的目标文件,输出可执行文件</li>
-<li>若非空,说明有引用的符号未找到其定义,链接不全,报错</li>
-</ol>
-<p>考虑:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -static ./libvector.a main.c</span><br></pre></td></tr></table></figure>
-<p>先读到静态库,此时E,U,D均为空,没有任何库成员加入目标文件集合.<br>读入main.c后解析结束,报错</p>
-<p>这意味着使用gcc命令链接库时,应把存档文件放在目标文件后<br>且如果库与库之间<strong>不独立</strong>,也要对库的先后顺序进行排序.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">gcc foo.c libx.a liby.a libz.a</span><br><span class="line">#调用顺序关系: libx -&gt; liby -&gt; libz</span><br><span class="line">读入x.a的同时,多了对y的引用,需要进一步解析</span><br><span class="line">一直到z完成所有的解析</span><br></pre></td></tr></table></figure>
-<p>才能保证所有的符号都解析完成</p>
-<p>如果存在相互调用:libx -&gt; liby, liby-&gt;libx<br>则必须重复出现:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc foo.c libx.a liby.a libx.a</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">p.o-&gt;x.a-&gt;y.a</span><br><span class="line">y.a-&gt;x.a-&gt;p.o</span><br><span class="line">//最小命令:最后不加p.o 因为p.o是目标文件 上面的顺序是对于链接库的顺序而言的</span><br><span class="line">gcc p.o x.a y.a x.a</span><br></pre></td></tr></table></figure>
-
-<h3 id="重定位"><a href="#重定位" class="headerlink" title="重定位"></a>重定位</h3><p>重定位,即合并输入模块,为每个符号分配运行地址:</p>
-<ul>
-<li>重定位节和符号定义:合并相同类型的节,将运行时的内存地址赋给新的聚合节,也赋给输入模块定义的每个符号</li>
-<li>重定位节中的符号引用:修改对符号的引用使其指向正确的运行地址 这个步骤需要的数据结构是<strong>重定位条目</strong></li>
-</ul>
-<h4 id="重定位条目"><a href="#重定位条目" class="headerlink" title="重定位条目"></a>重定位条目</h4><p>对于符号定义,我们通过合并,就可以赋给他们运行地址:ADDR(s)<br>而对于引用,我们并不知道引用具体指向哪,所以提出了重定位条目<br>对于目标位置未知的引用,编译器生成一个重定位条目,告诉链接器把目标文件合并成可执行文件时如何修改这个引用<br>代码的重定位条目位于.rel.text<br>已初始化数据的重定位条目位于.rel.data</p>
-<p>我们的目的是在链接时借助重定位条目把不知道具体位置的引用翻译成某个实际运行地址.<br>对于函数,我们将给出其跳转地址<br>对于变量,我们将给出其所在位置</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">typedef struct&#123;</span><br><span class="line">    long offset;     //节内偏移</span><br><span class="line">    long type:32,    //重定位类型</span><br><span class="line">         symbol:32;  //符号表index</span><br><span class="line">    long addend;     //一个有符号常数,一些类型的重定位需要使用它做偏移调整</span><br><span class="line">&#125;Eld64_Rela;</span><br></pre></td></tr></table></figure>
-<p>我们只关心两种基本的重定位类型:</p>
-<ul>
-<li>R_X86_64_PC32 :使用32位的PC相对地址引用:距离PC的偏移量</li>
-<li>R_X86_64_32   :使用32位绝对地址引用 绝对寻址</li>
-</ul>
-<p>算法伪代码如下:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">foreach section s&#123;</span><br><span class="line">    foreach relocation entry r&#123;</span><br><span class="line">        refptr = s + r.offset //重定位引用地址</span><br><span class="line"></span><br><span class="line">        //PC相对地址引用</span><br><span class="line">        if(r.type == R_X86_64_PC32)&#123;</span><br><span class="line">            refaddr = ADDR(s) + r.offset; //运行时地址</span><br><span class="line">            *refptr = (unsigned) (ADDR(r.symbol) + r.addend - refaddr);</span><br><span class="line">        &#125;</span><br><span class="line">        //绝对地址引用</span><br><span class="line">        if(r.type == R_X86_64_32)&#123;</span><br><span class="line">            *refptr = (unsigned) (ADDR(r.symbol) + r.addend);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>PC相对地址引用:<br><strong>符号所在地址</strong>与<strong>对符号的引用所在地址</strong>差了多少,并加上一个<strong>调整值</strong><br>当执行到对符号的引用,查看重定位条目,计算出相对值.<br>此时,原PC值压入栈,更新PC值为PC + (*refptr) 就可以找到符号所在地址.<br>当目标函数结束后ret,原PC值出栈<br>CPU继续执行对该函数引用的下一条指令</p>
-<p>对于非函数符号</p>
-<h4 id="重定位引用"><a href="#重定位引用" class="headerlink" title="重定位引用"></a>重定位引用</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">/*main.c*/</span><br><span class="line">int sum(int *a,int n);      //函数,未初始化,弱符号</span><br><span class="line">int array[2] = &#123;1,2&#125;        //全局变量,已初始化,强符号</span><br><span class="line">int main()&#123;                 //局部符号main</span><br><span class="line">    int val = sum(array,2);</span><br><span class="line">    return val;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/*sum.c*/</span><br><span class="line">int sum(int *a,int n)&#123;      //函数,已初始化,强符号</span><br><span class="line">    int i,s=0;</span><br><span class="line">    for(i=0;i&lt;n;i++)</span><br><span class="line">        s += a[i];</span><br><span class="line">    return s;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>以下是main.o的反汇编代码</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">1   0000000000000000 &lt;main&gt;:</span><br><span class="line">2   0 : 48 83 ec 08         sub      $0x8,%rsp</span><br><span class="line">3   4 : be 02 00 00 00      mov      $0x2,%esi</span><br><span class="line">4   9 : bf 00 00 00 00      mov      $0x0,%edi</span><br><span class="line">5   a :                 R_X86_62_32 array            Relocation entry</span><br><span class="line">6   e : e8 00 00 00 00      callq    13&lt;main+0x13&gt;   sum()</span><br><span class="line">7   f :                 R_X86_62_PC32 sum-0x4        Relocation entry</span><br><span class="line">8   13: 48 83 c4 08         add      $0x8,%rsp</span><br><span class="line">9   17: c3                  retq</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>重定位PC相对引用:sum</li>
-<li>重定位绝对引用:array</li>
-</ul>
-<h4 id="PC相对地址引用"><a href="#PC相对地址引用" class="headerlink" title="PC相对地址引用"></a>PC相对地址引用</h4><p>PC相对地址引用需要PC值的参与</p>
-<p>call指令开始于节偏移0xe的位置<br>其中,操作码为0xe8,后面则跟着占位符: 00 00 00 00<br>这些占位符代表了相对于PC偏移的量,目前还没有计算出</p>
-<p>其中sum的重定位条目:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">r.offset = 0xf  //位于偏移量0xf处</span><br><span class="line">r.symbol = sum</span><br><span class="line">r.type   = R_X86_62_PC32</span><br><span class="line">r.addend = -4</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">假设:</span><br><span class="line">ADDR(s) = ADDR(.text) = 0x4004d0       //节运行地址  ,该引用所在节的位置</span><br><span class="line">ADDR(r.symbol) = ADDR(sum) = 0x4004e8  //符号运行地址,即sum()的位置</span><br><span class="line">//可求引用地址: 在节内</span><br><span class="line">refaddr = ADDR(s) + r.offset</span><br><span class="line">        = 0x4004d0 + 0xf</span><br><span class="line">        = 0x4004df</span><br><span class="line">//根据算法得到这个值,PC相对引用,所以是PC加上该值</span><br><span class="line">*refptr = (unsigned) (ADDR(r.symbol) + r.addend - refaddr)</span><br><span class="line">        = (unsigned) (0x4004e8       + (-4)     - 0x4004df )</span><br><span class="line">        = (unsigned) 0x5</span><br></pre></td></tr></table></figure>
-<p>我们得到可执行文件:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">4004de: e8 05 00 00 00     callq 4004e8 &lt;sum&gt;   sum()</span><br><span class="line">//call存放在0x4004de</span><br><span class="line">//CPU执行call时,PC值为0x4004e3(call的下一条指令,0xx4004de+0x5)</span><br><span class="line">//此时函数调用,PC压入栈,PC+0x5得到4004e8,修改PC值</span><br><span class="line">//该值指向sum()的第一条指令 当sum()抵达ret,则原PC值出栈,执行call的下一条指令</span><br></pre></td></tr></table></figure>
-
-<h4 id="绝对地址引用"><a href="#绝对地址引用" class="headerlink" title="绝对地址引用"></a>绝对地址引用</h4><p>绝对地址非常简单,它直接给出了其位置<br>array的重定位条目:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">r.offset = 0xa</span><br><span class="line">r.symbol = array</span><br><span class="line">r.type   = R_X86_62_32</span><br><span class="line">r.addend = 0</span><br></pre></td></tr></table></figure>
-<p>我们可以计算array的引用地址:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ADDR(r.symbol) = ADDR(array) = 0x601018</span><br><span class="line"></span><br><span class="line">*refptr = (unsigned) (ADDR(r.symbol) + r.addend)</span><br><span class="line">        = (unsigned) (0x601018       + 0       )</span><br><span class="line">        = (unsigned) (0x601018)</span><br></pre></td></tr></table></figure>
-<p>那么经过重定位,我们可以得到:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">.text:</span><br><span class="line">4004d9: bf 18 10 60 00     mov $0x601018,%edi    %edi = &amp;array</span><br><span class="line"></span><br><span class="line">.data:</span><br><span class="line">0000000000601018 &lt;array&gt;:</span><br><span class="line">601018: 01 00 00 00 02 00 00 00</span><br></pre></td></tr></table></figure>
-
-<p>至此,各个节中所有对其它模块的符号引用都被重定位到了某个具体的内存位置.</p>
-<h3 id="可执行目标文件"><a href="#可执行目标文件" class="headerlink" title="可执行目标文件"></a>可执行目标文件</h3><p>C程序最终被转化为一个二进制文件,包含了加载程序到内存并运行它所需的所有信息.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">//代码段,只读</span><br><span class="line">ELF头      </span><br><span class="line">段头部表     :将连续的节映射到内存段</span><br><span class="line">.init       :定义了一个小函数_init,程序的初始化代码会使用它</span><br><span class="line">.text      </span><br><span class="line">.rodata</span><br><span class="line"></span><br><span class="line">//数据段,读/写</span><br><span class="line">.data      </span><br><span class="line">.bss</span><br><span class="line"></span><br><span class="line">//可执行文件已完全链接,rel段消失</span><br><span class="line"></span><br><span class="line">//不加载到内存的符号表与调试信息</span><br><span class="line">.symtab</span><br><span class="line">.debug</span><br><span class="line">.line</span><br><span class="line">.strtab</span><br><span class="line">节头部表    :描述目标文件的节</span><br></pre></td></tr></table></figure>
-<p>其中程序头部表(program header table)描述了连续的片(chunk)到连续内存段的映射关系<br>它描述了各段的读写权限,起始位置,偏移,大小,等等;也包括对齐要求,这种对齐是一种优化.</p>
-<p>在Linux shell下</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">linux&gt; ./prog</span><br></pre></td></tr></table></figure>
-<p>prog不是任何shell内置命令,shell会认为prog是一个可执行文件,调用称为加载器(loader)的操作系统代码来运行它<br>每个Linux程序运行时都有一个内存映像 P485<br>加载器运行时,在程序头部表的引导下将片复制到代码段与数据段<br>然后跳转到程序的入口点,即_start的地址</p>
-<h3 id="动态链接共享库"><a href="#动态链接共享库" class="headerlink" title="动态链接共享库"></a>动态链接共享库</h3><p>静态库的一个问题是需要定期维护与更新,<br>程序员需要了解该库的最新更新情况,并显式地将他们的程序与更新了的库重新链接<br>另一个问题是,考虑几乎每个C程序都会使用的标准I&#x2F;O,每个程序都会把这些函数的代码复制到每个运行进程的文本段,这造成了内存空间的极大浪费.</p>
-<p>于是提出了<strong>共享库</strong>(shared library),允许在运行和加载时,可以加载到任意的内存位置,并与内存里的程序链接.称之为<strong>动态链接</strong>(dynamic linking),由<strong>动态链接</strong>器执行<br>微软的操作系统大量地使用了共享库,即<strong>DLL</strong>(动态链接库)</p>
-<p>共享库是一个<strong>目标模块</strong>,也称共享目标(shared object),<strong>.so</strong>后缀</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -shared -fpic -o libvector.so addvec.c multvec.c</span><br></pre></td></tr></table></figure>
-<p>-shared指示生成一个共享的目标文件<br>-fpic指示生成与位置无关代码</p>
-<p>随后我们可以将其链接</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -o prog main2.c libvector.so</span><br></pre></td></tr></table></figure>
-<p>此时我们得到的prog是<strong>部分链接</strong>的可执行目标文件<br>这个文件的形式可以使它运行时与libvector.so链接<br>此时,<strong>没有</strong>任何libvector.so的代码和数据节被复制到prog中,<br>链接器只复制了一些重定位,符号表信息,使得prog可在运行时解析libvector.so中的引用</p>
-<h3 id="从应用程序中加载和链接共享库"><a href="#从应用程序中加载和链接共享库" class="headerlink" title="从应用程序中加载和链接共享库"></a>从应用程序中加载和链接共享库</h3><p>上一节属于加载时链接,而如何在运行时链接:<br>Linux为动态链接器提供了简单的接口 允许应用程序在运行时加载和链接共享库</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#include&lt;dlfcn.h&gt;</span><br><span class="line"></span><br><span class="line">void *dlopen(const char*filename,int flag);</span><br><span class="line"></span><br><span class="line">void *dlsym(void *handle,char *symbol);</span><br><span class="line"></span><br><span class="line">int dlclose(void *handle)</span><br></pre></td></tr></table></figure>
-<p>dlsym:指向前面已经打开了的共享库,输入一个symbol名字,返回符号的地址<br>dlclose:卸载共享库</p>
-<h3 id="位置无关代码-非重点"><a href="#位置无关代码-非重点" class="headerlink" title="位置无关代码 非重点"></a>位置无关代码 非重点</h3><h3 id="库打桩-非重点"><a href="#库打桩-非重点" class="headerlink" title="库打桩 非重点"></a>库打桩 非重点</h3><p>给定一个需要打桩的目标函数,创造一个包装函数.他的原型和目标函数一样<br>使用某种特殊的打桩机制,欺骗系统调用包装函数,然后再调用目标函数,再将目标函数得到返回值传递回调用者</p>
-<p>可以发生在编译&#x2F;链接&#x2F;运行时.</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/01/17/CSAPP-7/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
