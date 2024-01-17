@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha256-yIDrPSXHZdOZhAqiBP7CKzIwMQmRCJ8UeB8Jo17YC4o=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"nostorusium.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.19.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="Chapter 1除以0123456789101112131415161718192021&#x2F;&#x2F;run:Program received signal SIGFPE, Arithmetic exception.&#x2F;&#x2F;disassemble:Dump of assembler code for function main:   0x0000555555555149 &lt;+0&gt;:     end">
+<meta property="og:type" content="article">
+<meta property="og:title" content="rCore-第一章">
+<meta property="og:url" content="https://nostorusium.github.io/2024/01/17/RISCV%E6%9E%B6%E6%9E%84%E4%B8%8BOS%E5%AE%9E%E7%8E%B0/index.html">
+<meta property="og:site_name" content="Nostorusium&#39;s inventory">
+<meta property="og:description" content="Chapter 1除以0123456789101112131415161718192021&#x2F;&#x2F;run:Program received signal SIGFPE, Arithmetic exception.&#x2F;&#x2F;disassemble:Dump of assembler code for function main:   0x0000555555555149 &lt;+0&gt;:     end">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-01-17T08:52:00.013Z">
+<meta property="article:modified_time" content="2024-01-17T08:59:17.610Z">
+<meta property="article:author" content="Nostorusium">
+<meta property="article:tag" content="操作系统">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://nostorusium.github.io/2024/01/17/RISCV%E6%9E%B6%E6%9E%84%E4%B8%8BOS%E5%AE%9E%E7%8E%B0/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://nostorusium.github.io/2024/01/17/RISCV%E6%9E%B6%E6%9E%84%E4%B8%8BOS%E5%AE%9E%E7%8E%B0/","path":"2024/01/17/RISCV架构下OS实现/","title":"rCore-第一章"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>rCore-第一章 | Nostorusium's inventory</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Nostorusium's inventory</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">亚拉戈西瓜的杂货堆</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Chapter-1"><span class="nav-number">1.</span> <span class="nav-text">Chapter 1</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%99%A4%E4%BB%A50"><span class="nav-number">1.1.</span> <span class="nav-text">除以0</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Rust%E4%BD%BF%E7%94%A8"><span class="nav-number">1.2.</span> <span class="nav-text">Rust使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E6%A0%87%E5%B9%B3%E5%8F%B0%E4%B8%8E%E7%9B%AE%E6%A0%87%E4%B8%89%E5%85%83%E7%BB%84"><span class="nav-number">1.3.</span> <span class="nav-text">目标平台与目标三元组</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A7%BB%E9%99%A4%E6%A0%87%E5%87%86%E5%BA%93%E4%BE%9D%E8%B5%96"><span class="nav-number">1.4.</span> <span class="nav-text">移除标准库依赖</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A7%BB%E9%99%A4println-%E5%AE%8F"><span class="nav-number">1.4.1.</span> <span class="nav-text">移除println!宏</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#panic%E5%87%BD%E6%95%B0"><span class="nav-number">1.4.2.</span> <span class="nav-text">panic函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Rust%E6%A8%A1%E5%9D%97%E5%8C%96%E7%BC%96%E7%A8%8B"><span class="nav-number">1.4.3.</span> <span class="nav-text">Rust模块化编程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A7%BB%E9%99%A4main%E5%87%BD%E6%95%B0"><span class="nav-number">1.4.4.</span> <span class="nav-text">移除main函数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E7%9A%84%E7%AC%AC%E4%B8%80%E6%9D%A1%E6%8C%87%E4%BB%A4"><span class="nav-number">1.5.</span> <span class="nav-text">内核的第一条指令</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Qemu%E6%A8%A1%E6%8B%9F%E5%99%A8"><span class="nav-number">1.5.1.</span> <span class="nav-text">Qemu模拟器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A0%E7%94%B5%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B"><span class="nav-number">1.5.2.</span> <span class="nav-text">加电启动流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E7%9A%84%E7%AC%AC%E4%B8%80%E6%9D%A1%E6%8C%87%E4%BB%A4-1"><span class="nav-number">1.5.3.</span> <span class="nav-text">内核的第一条指令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5%E8%84%9A%E6%9C%AC"><span class="nav-number">1.5.4.</span> <span class="nav-text">链接脚本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%8B%E5%8A%A8%E5%8A%A0%E8%BD%BD%E5%86%85%E6%A0%B8%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6"><span class="nav-number">1.5.5.</span> <span class="nav-text">手动加载内核可执行文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GDB%E8%B0%83%E8%AF%95"><span class="nav-number">1.5.6.</span> <span class="nav-text">GDB调试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E5%86%85%E6%A0%B8%E6%94%AF%E6%8C%81%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8"><span class="nav-number">1.6.</span> <span class="nav-text">为内核支持函数调用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8ERISC-V%E5%AF%84%E5%AD%98%E5%99%A8"><span class="nav-number">1.6.1.</span> <span class="nav-text">函数调用与RISC-V寄存器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E9%85%8D%E5%B9%B6%E4%BD%BF%E7%94%A8%E5%90%AF%E5%8A%A8%E6%A0%88"><span class="nav-number">1.6.2.</span> <span class="nav-text">分配并使用启动栈</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SBI"><span class="nav-number">1.7.</span> <span class="nav-text">SBI</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%95%E5%85%A5sbi-rt%E4%BE%9D%E8%B5%96"><span class="nav-number">1.7.1.</span> <span class="nav-text">引入sbi_rt依赖</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%BC%E5%BC%8F%E5%8C%96%E8%BE%93%E5%87%BA"><span class="nav-number">1.7.2.</span> <span class="nav-text">格式化输出</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hello-world"><span class="nav-number">1.7.3.</span> <span class="nav-text">Hello,world!</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AB%A0%E8%8A%82%E5%B0%8F%E8%8A%82"><span class="nav-number">1.8.</span> <span class="nav-text">章节小节</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Nostorusium"
+      src="/images/aris.jpg">
+  <p class="site-author-name" itemprop="name">Nostorusium</p>
+  <div class="site-description" itemprop="description">这是好的</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">1</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/nostorusium" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;nostorusium" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://nostorusium.github.io/2024/01/17/RISCV%E6%9E%B6%E6%9E%84%E4%B8%8BOS%E5%AE%9E%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/aris.jpg">
+      <meta itemprop="name" content="Nostorusium">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Nostorusium's inventory">
+      <meta itemprop="description" content="这是好的">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="rCore-第一章 | Nostorusium's inventory">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          rCore-第一章
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2024-01-17 16:52:00 / 修改时间：16:59:17" itemprop="dateCreated datePublished" datetime="2024-01-17T16:52:00+08:00">2024-01-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6/" itemprop="url" rel="index"><span itemprop="name">计算机科学</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="Chapter-1"><a href="#Chapter-1" class="headerlink" title="Chapter 1"></a>Chapter 1</h1><h2 id="除以0"><a href="#除以0" class="headerlink" title="除以0"></a>除以0</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">//run:</span><br><span class="line">Program received signal SIGFPE, Arithmetic exception.</span><br><span class="line"></span><br><span class="line">//disassemble:</span><br><span class="line">Dump of assembler code for function main:</span><br><span class="line">   0x0000555555555149 &lt;+0&gt;:     endbr64</span><br><span class="line">   0x000055555555514d &lt;+4&gt;:     push   %rbp</span><br><span class="line">   0x000055555555514e &lt;+5&gt;:     mov    %rsp,%rbp</span><br><span class="line">   0x0000555555555151 &lt;+8&gt;:     mov    $0x1,%eax</span><br><span class="line">   0x0000555555555156 &lt;+13&gt;:    mov    $0x0,%ecx</span><br><span class="line">   0x000055555555515b &lt;+18&gt;:    cltd</span><br><span class="line">=&gt; 0x000055555555515c &lt;+19&gt;:    idiv   %ecx</span><br><span class="line">   0x000055555555515e &lt;+21&gt;:    mov    %eax,%esi</span><br><span class="line">   0x0000555555555160 &lt;+23&gt;:    lea    0xe9d(%rip),%rax        # 0x555555556004</span><br><span class="line">   0x0000555555555167 &lt;+30&gt;:    mov    %rax,%rdi</span><br><span class="line">   0x000055555555516a &lt;+33&gt;:    mov    $0x0,%eax</span><br><span class="line">   0x000055555555516f &lt;+38&gt;:    call   0x555555555050 &lt;printf@plt&gt;</span><br><span class="line">   0x0000555555555174 &lt;+43&gt;:    mov    $0x0,%eax</span><br><span class="line">   0x0000555555555179 &lt;+48&gt;:    pop    %rbp</span><br><span class="line">   0x000055555555517a &lt;+49&gt;:    ret</span><br><span class="line">End of assembler dump.</span><br></pre></td></tr></table></figure>
+
+<p>程序在执行idiv时发生除以0异常<br>对应信号SIGFPE,对应行为是终止</p>
+<p>值得注意的是异常与信号处理是与架构相关的<br>该Linux运行在x86架构下,&#x2F;0对应浮点异常<br>而在RISC-V架构下除以0不是异常,而有确定的结果</p>
+<span id="more"></span>
+
+<h2 id="Rust使用"><a href="#Rust使用" class="headerlink" title="Rust使用"></a>Rust使用</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ cargo new os --bin</span><br></pre></td></tr></table></figure>
+<p>使用cargo建立新rust项目<br>–bin表示创建一个可执行程序项目而不是函数库项目</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">tree os</span><br><span class="line">os</span><br><span class="line">├── Cargo.toml  //项目配置,如作者信息联系方式,库依赖等</span><br><span class="line">└── src         //源代码</span><br><span class="line">    └── main.rs //helloworld!</span><br></pre></td></tr></table></figure>
+<p>进入os目录下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ cargo run //构建并运行</span><br></pre></td></tr></table></figure>
+
+<p>应用程序调用了标准库<br>标准库则需要系统调用实现<br>打印Hello,world时得到println!宏由Rust标准库std提供</p>
+<h2 id="目标平台与目标三元组"><a href="#目标平台与目标三元组" class="headerlink" title="目标平台与目标三元组"></a>目标平台与目标三元组</h2><p>预处理阶段,实际上是把<strong>源代码的宏展开</strong><br>编译器在进行编译与链接时需要知道程序在哪个平台上运行</p>
+<ul>
+<li>如果用户态基于的内核会导致系统调用接口不同</li>
+<li>底层硬件不同 对硬件资源的访问方式也有差异</li>
+</ul>
+<p>某些编译器支持同一份源代码无需修改即可编译到不同的目标平台上运行,这种情况下源代码是<strong>跨平台</strong>的<br>而对于另一些编译器,他们本身已经预设好了固定的目标平台</p>
+<p>Rust编译器通过 <strong>目标三元组(Target Triplet)</strong> 来描述程序运行的目标平台</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ rustc --version --verbose</span><br><span class="line">rustc 1.76.0-nightly (f5dc2653f 2023-11-25)</span><br><span class="line">binary: rustc</span><br><span class="line">commit-hash: f5dc2653fdd8b5d177b2ccbd84057954340a89fc</span><br><span class="line">commit-date: 2023-11-25</span><br><span class="line">host: x86_64-unknown-linux-gnu</span><br><span class="line">release: 1.76.0-nightly</span><br><span class="line">LLVM version: 17.0.5</span><br></pre></td></tr></table></figure>
+<p>host给出了默认的目标平台是x86_64-unknown-linux-gnu<br>这意味着CPU架构是x86,厂商unknown,操作系统是linux.</p>
+<p>我们希望他能在另一个硬件平台上运行hello,world<br>并把CPU架构从x86_64换成RISC-V</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">$ rustc --print target-list | grep riscv</span><br><span class="line">riscv32gc-unknown-linux-gnu</span><br><span class="line">riscv32gc-unknown-linux-musl</span><br><span class="line">riscv32i-unknown-none-elf</span><br><span class="line">riscv32im-unknown-none-elf</span><br><span class="line">riscv32imac-esp-espidf</span><br><span class="line">riscv32imac-unknown-none-elf</span><br><span class="line">riscv32imac-unknown-xous-elf</span><br><span class="line">riscv32imc-esp-espidf</span><br><span class="line">riscv32imc-unknown-none-elf</span><br><span class="line">riscv64-linux-android</span><br><span class="line">riscv64gc-unknown-freebsd</span><br><span class="line">riscv64gc-unknown-fuchsia</span><br><span class="line">riscv64gc-unknown-hermit</span><br><span class="line">riscv64gc-unknown-linux-gnu</span><br><span class="line">riscv64gc-unknown-linux-musl</span><br><span class="line">riscv64gc-unknown-netbsd</span><br><span class="line">=&gt; riscv64gc-unknown-none-elf</span><br><span class="line">riscv64gc-unknown-openbsd</span><br><span class="line">riscv64imac-unknown-none-elf</span><br></pre></td></tr></table></figure>
+<p>命令给出了当前Rust编译器支持的RISCV目标平台<br>我们选择riscv64gc-unknown-none-elf<br>表示CPU架构是riscv64gc,厂商Unknown,操作系统none<br>elf表示没有标准的运行时库,意味着没有任何系统调用的封装支持<br>这样的平台称之为<strong>裸机平台</strong>（bare-metal),其上运行的软件没有传统的操作系统支持</p>
+<p>Rust语言标准库需要操作系统的支持,如果我们期望运行一个裸机上的操作系统,就不能直接使用Rust标准库</p>
+<p>幸运的是,Rust有一个对标准库裁剪后的核心库core<br>core库不需要任何操作系统支持,但功能也比较受限,但包含了Rust相当一部分的核心机制,可以满足我们的大部分功能需求.</p>
+<p>Rust是一种面向系统(包括操作系统)开发的语言,这意味着在Rust语言省泰中有很多第三方库也不依赖标准库std而仅仅依赖核心库core.</p>
+<p>对他们的使用可以很大程度上减轻我们的变成负担.<br>我们现在需要将对于标准库std的引用换成核心库core</p>
+<h2 id="移除标准库依赖"><a href="#移除标准库依赖" class="headerlink" title="移除标准库依赖"></a>移除标准库依赖</h2><p>本章的目标是构建一个内核最小执行环境使其能在risv64gc架构裸机上运行,我们称其”三叶虫”OS</p>
+<p>为了移除对Rust std标准库的依赖,我们需要添加能够支持应用的裸机级别的<strong>库操作系统</strong>Library OS,LibOS</p>
+<blockquote>
+<p>LibOS以函数库的形式存在,为应用程序提供操作系统的基本功能.<br>它源于MIT在1996年对Exokernel外核的OS结构研究,该架构把传统得到单体内核分为两部分<br>一部分以库操作系统LibOS与应用程序紧密耦合来实现传统的OS抽象,并进行面向应用的剪裁与优化<br>另一部分即外核,仅专注于最基本的安全复用物理硬件机制上,为LibOS提供基本的硬件访问服务.<br>这样的设计思路可以针对应用程序的特征定制LibOS来达到高性能的目的<br>由于定制一个LibOS的工作量大且难以重复使用,人力成本因素导致了它不太被工业界认可</p>
+</blockquote>
+<h3 id="移除println-宏"><a href="#移除println-宏" class="headerlink" title="移除println!宏"></a>移除println!宏</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ rustup target add riscv64gc-unknown-none-elf  //为rustc添加一个新target</span><br></pre></td></tr></table></figure>
+
+<p>在os目录下新建.cargo&#x2F;config</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[build]</span><br><span class="line">target = &quot;riscv64gc-unknown-none-elf&quot;</span><br></pre></td></tr></table></figure>
+<p>这会对Cargo工具在os目录下的行为进行调整:<br>现在会默认使用riscv64gc作为目标平台而不是原先默认的x86<br>这种编译器运行的开发平台(x86)与目标平台(riscv)不同的情况称<strong>交叉编译</strong></p>
+<p>添加 #![no_std] 告诉编译器不要使用std<br>此时运行cargo run,将会提示</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cannot find macro `println` in this scope</span><br></pre></td></tr></table></figure>
+<p>这是因为我们移除了std依赖<br>现在把println注释掉,</p>
+<p>重新构建运行</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#[panic_handler]` function required, but not found</span><br></pre></td></tr></table></figure>
+
+<p>panic!宏用于处理无法恢复的致命错误(panic)<br>Rust编译器在编译程序时从安全性 考虑需要有panic!宏的具体实现<br>std提供了它的具体实现,大致功能是打印出错位置和原因并杀死应用<br>而核心库core中只有一个panic!宏的空壳,里面没有任何内容<br>我们需要先实现一个简陋的panic处理函数才能让LibOS的编译通过</p>
+<h3 id="panic函数"><a href="#panic函数" class="headerlink" title="panic函数"></a>panic函数</h3><p>创建一个新的子模块lang_item.rs来实现panic函数并通过#[panic_handler]通知编译器用panic来对接panic!宏</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">lang_item.rs:</span><br><span class="line"></span><br><span class="line">use core::panic::PanicInfo;</span><br><span class="line"></span><br><span class="line">#[panic_handler]</span><br><span class="line">fn panic(_info: &amp;PanicInfo)-&gt;!&#123;</span><br><span class="line">   loop&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>并在main.rs中添加:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#![no_std]</span><br><span class="line">mod lang_items;</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>其中,#[panic_handler]是一种编译指导属性,它标记了core中panic!宏要对接的函数<br>它所标注的函数需要具有fn(&amp;PanicInfo) -&gt; !函数签名<br>函数可以通过PanicInfo数据结构获取错误相关信息<br>这样Rust编译器就可以把core库中的panic!宏定义与#[panic_handler]指向的panic函数合并在一起<br>使得no_std程序具有类似std库对应致命错误的功能</p>
+<h3 id="Rust模块化编程"><a href="#Rust模块化编程" class="headerlink" title="Rust模块化编程"></a>Rust模块化编程</h3><p>把一个项目划分为多个子模块是显而易见的道理<br>每个通过Cargo工具创建的Rust项目都是一个模块,根据项目类型不同,模块的<strong>根</strong>所在位置也不同</p>
+<ul>
+<li>–bin参数表示可执行Rust项目,根为src&#x2F;main.rs</li>
+<li>–lib参数表示创建一个Rust库项目 根为src&#x2F;lib.rs<br>在根文件中声明所有可能会用到的子模块<br>如在main.rs中通过mod lang_items声明了子模块lang_items<br>他的实现为lang_item.rs<br>当子模块比较复杂,也可以放在src同目录下与子模块同名的子目录之下<br>Rust默认模块的内容私有,private,除非被显式地声明为pub的内容才会对其他模块公开<br>通过使用绝对路径&#x2F;相对路径来引用其他模块或当前模块的内容<br>如 use core::panic::PanicInfo</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">//lang_items.rs</span><br><span class="line">use core::panic::PanicInfo;</span><br><span class="line"></span><br><span class="line">#[panic_handler]</span><br><span class="line">fn panic(_info: &amp;PanicInfo)-&gt;!&#123;</span><br><span class="line">    loop&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//main.rs</span><br><span class="line">#![no_std]</span><br><span class="line">mod lang_items;</span><br><span class="line"></span><br><span class="line">fn main() &#123;</span><br><span class="line">        //println!(&quot;Hello, world!&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述为两个模块<br>根模块引用了子模块lang_items<br>items引用了core核心库中panic&#x2F;PanicInfo<br>PanicInfo传入panic函数 其函数内容为原地loop</p>
+<h3 id="移除main函数"><a href="#移除main函数" class="headerlink" title="移除main函数"></a>移除main函数</h3><p>重新cargo build</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">error: requires `start` lang_item</span><br><span class="line">error: could not compile `os` (bin &quot;os&quot;) due to previous error</span><br></pre></td></tr></table></figure>
+<p>我们缺少一个名为start的语义项<br>在执行应用程序之前,标准库和第三方库作为应用程序的执行环境需要做一些初始化工作,之后才跳转到入口点main函数.<br>start代表了标准库std在执行应用程序之前需要进行的初始化工作<br>由于禁用了std,编译器自然找不到它的实现</p>
+<p>这里提供一个最简单的解决方案:压根不让编译器使用这项功能.<br>在main.rs中加入#![no_main] 告诉编译器我们没有一般意义上的main函数,并将原先的main函数删除.</p>
+<p>在没有main函数的情况下编译器也就不需要做所谓的初始化工作了</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#![no_main]</span><br><span class="line">mod lang_items;</span><br><span class="line"></span><br><span class="line">//fn main() &#123;</span><br><span class="line">//        println!(&quot;Hello, world!&quot;);</span><br><span class="line">//&#125;</span><br></pre></td></tr></table></figure>
+<p>重新cargo build,编译成功。</p>
+<p>我们成功地脱离了标准库,通过了编译器的检验<br>但现在什么功能也没有</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">$ rust-readobj -h target/riscv64gc-unknown-none-elf/debug/os</span><br><span class="line"></span><br><span class="line">File: target/riscv64gc-unknown-none-elf/debug/os</span><br><span class="line">Format: elf64-littleriscv</span><br><span class="line">Arch: riscv64</span><br><span class="line">AddressSize: 64bit</span><br><span class="line">LoadName: &lt;Not found&gt;</span><br><span class="line">ElfHeader &#123;</span><br><span class="line">  Ident &#123;</span><br><span class="line">    Magic: (7F 45 4C 46)</span><br><span class="line">    Class: 64-bit (0x2)</span><br><span class="line">    DataEncoding: LittleEndian (0x1)</span><br><span class="line">    FileVersion: 1</span><br><span class="line">    OS/ABI: SystemV (0x0)</span><br><span class="line">    ABIVersion: 0</span><br><span class="line">    Unused: (00 00 00 00 00 00 00)</span><br><span class="line">  &#125;</span><br><span class="line">  Type: Executable (0x2)</span><br><span class="line">  Machine: EM_RISCV (0xF3)</span><br><span class="line">  Version: 1</span><br><span class="line">  Entry: 0x0</span><br><span class="line">  ProgramHeaderOffset: 0x40</span><br><span class="line">  SectionHeaderOffset: 0x1B70</span><br><span class="line">  Flags [ (0x5)</span><br><span class="line">    EF_RISCV_FLOAT_ABI_DOUBLE (0x4)</span><br><span class="line">    EF_RISCV_RVC (0x1)</span><br><span class="line">  ]</span><br><span class="line">  HeaderSize: 64</span><br><span class="line">  ProgramHeaderEntrySize: 56</span><br><span class="line">  ProgramHeaderCount: 4</span><br><span class="line">  SectionHeaderEntrySize: 64</span><br><span class="line">  SectionHeaderCount: 14</span><br><span class="line">  StringTableSectionIndex: 12</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对其进行分析可以看到它的入口地址Entry是0<br>经验告诉我们0一般对应NULL与空指针 所以为0的入口地址无法对应任何指令<br>如果对其进行反汇编可以看到没有生成汇编代码<br>这个二进制程序虽然合法 但它是一个空程序<br>因为它没有进行任何有意义的工作,甚至由于移除了main而没有传统意义上的入口点.<br>因此Rust编译器会生成一个空程序</p>
+<h2 id="内核的第一条指令"><a href="#内核的第一条指令" class="headerlink" title="内核的第一条指令"></a>内核的第一条指令</h2><h3 id="Qemu模拟器"><a href="#Qemu模拟器" class="headerlink" title="Qemu模拟器"></a>Qemu模拟器</h3><p>以下是os&#x2F;Makefile中启动Qemu的部分</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ qemu-system-riscv64 \</span><br><span class="line">    -machine virt \</span><br><span class="line">    -nographic \</span><br><span class="line">    -bios ../bootloader/rustsbi-qemu.bin \</span><br><span class="line">    -device loader,file=target/riscv64gc-unknown-none-elf/release/os.bin,addr=0x80200000</span><br></pre></td></tr></table></figure>
+<ul>
+<li>–machine virt 表示将模拟的计算机设置名为virt</li>
+<li>-nographic 表示无图形页面</li>
+<li>-bios设置了bootloader的位置</li>
+<li>-device loader表示在qemu开机之前将宿主机上的一个文件加载到qemu的物理内存的指定位置</li>
+</ul>
+<p>下面是另一个写法</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">QEMU_ARGS := -machine virt \</span><br><span class="line">    -nographic \</span><br><span class="line">    -bios $(BOOTLOADER) \</span><br><span class="line">    -device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA)</span><br></pre></td></tr></table></figure>
+<p>下面是常量内容</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"># Building</span><br><span class="line">TARGET := riscv64gc-unknown-none-elf</span><br><span class="line">MODE := release</span><br><span class="line">KERNEL_ELF := target/$(TARGET)/$(MODE)/os</span><br><span class="line">KERNEL_BIN := $(KERNEL_ELF).bin</span><br><span class="line"></span><br><span class="line"># BOARD</span><br><span class="line">BOARD := qemu</span><br><span class="line">SBI ?= rustsbi</span><br><span class="line">BOOTLOADER := ../bootloader/$(SBI)-$(BOARD).bin</span><br><span class="line"></span><br><span class="line"># KERNEL ENTRY</span><br><span class="line">KERNEL_ENTRY_PA := 0x80200000</span><br></pre></td></tr></table></figure>
+
+<p>Qemu的启动流程分为三个阶段<br>在Qemu模拟的virt中,物理内存的起始位置为0x80000000,默认大小为128MB<br>如果使用默认大小则其物理内存地址范围是[0x80000000,0x88000000)<br>Qemu在开始执行任何指令之前,首先把两个文件加载到物理内存中,<br>即把bootloader&#x2F;rustsbi-qemu.bin加载到0x80000000位置,<br>同时把内核镜像os.bin加载到<strong>KERNEL ENTRY</strong>,0x80200000</p>
+<h3 id="加电启动流程"><a href="#加电启动流程" class="headerlink" title="加电启动流程"></a>加电启动流程</h3><p>计算机加电启动流程可以分为若干个阶段,每个阶段由一层软件或固件负责,然后跳转到下一层的入口地址<br>Qemu为了模拟计算机加电启动的流程分为三个阶段:</p>
+<ul>
+<li>阶段1,Qemu内的一小段汇编<ul>
+<li>将必要的文件就在如Qemu物理内存</li>
+<li>QemuCPU的PC初始化为0x1000,对应Qemu实际执行的第一条指令位置</li>
+<li>执行几条指令后跳转到0x80000000,进入第二阶段</li>
+</ul>
+</li>
+<li>阶段2,bootloader负责<ul>
+<li>我们需要保证负责该阶段的bootloader位于0x80000000</li>
+<li>bootloader负责进行一些初始化工作,并进入下一阶段的入口处</li>
+<li>对于不同的bootloader而言,下一阶段的入口不一定相同,RustSBI则约定为固定的0x80200000</li>
+<li>RustSBI,RISC-V Supervisor Binary Interface 由于RISC-V的硬件与其他指令集不同,可以通过SBI的方式让内核感知并操控硬件</li>
+</ul>
+</li>
+<li>阶段3,内核镜像负责<ul>
+<li>控制权转移给操作系统</li>
+</ul>
+</li>
+</ul>
+<h3 id="内核的第一条指令-1"><a href="#内核的第一条指令-1" class="headerlink" title="内核的第一条指令"></a>内核的第一条指令</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># os/src/entry.asm</span><br><span class="line">  .section .text.entry</span><br><span class="line">  .globl _start</span><br><span class="line">_start:</span><br><span class="line">  li x1, 100</span><br></pre></td></tr></table></figure>
+
+<p>.section .text.entry的含义是将后面的内容放在一个名为text.entry的段中<br>所有的代码被保存在.text段,而这里命名为.text.entry来区分其他.text的目的是确保这一段能被放置在比任何其它代码段更低的地址,这样才能最先被执行</p>
+<p>.globl _start的含义是生成了全局符号_start<br>该符号指向紧跟在其后面的内容<br>li为LoadImmediate<br>表示将立即数100载入寄存器x1</p>
+<p>随后,将其嵌入main</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// os/src/main.rs</span><br><span class="line">#![no_std]</span><br><span class="line">#![no_main]</span><br><span class="line"></span><br><span class="line">mod lang_items;</span><br><span class="line"></span><br><span class="line">use core::arch::global_asm;</span><br><span class="line">global_asm!(include_str!(&quot;entry.asm&quot;));</span><br></pre></td></tr></table></figure>
+<p>使用核心库global_asm!宏与include_str!宏将同目录下的entry.asm转化为字符串嵌入代码</p>
+<h3 id="链接脚本"><a href="#链接脚本" class="headerlink" title="链接脚本"></a>链接脚本</h3><p>链接器的默认行为不符合我们的要求,修改Cargo的配置文件来应用我们自己的链接脚本<br>在.cargo&#x2F;config里增加:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[target.riscv64gc-unknown-none-elf]</span><br><span class="line">rustflags = [</span><br><span class="line">    &quot;-Clink-arg=-Tsrc/linker.ld&quot;, &quot;-Cforce-frame-pointers=yes&quot;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+<p>我们的链接脚本 os&#x2F;src&#x2F;linker.ld如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">OUTPUT_ARCH(riscv)            //设置目标平台为riscv</span><br><span class="line">ENTRY(_start)                 //把程序的入口点定为我们先前定义的全局符号_start</span><br><span class="line">BASE_ADDRESS = 0x80200000;    //定义一个基址 内核应该在的位置</span><br><span class="line"></span><br><span class="line">SECTIONS                      //以下体现了链接中对段的合并</span><br><span class="line">&#123;                             //.表示为当前地址 我们可以对.赋值来调整接下来的段放哪,也可以给一些全局符号赋值为.</span><br><span class="line">    . = BASE_ADDRESS;         //改变.的基址</span><br><span class="line">    skernel = .;              /start</span><br><span class="line"></span><br><span class="line">    stext = .;                //start</span><br><span class="line">    .text : &#123;                 //冒号前表示最终生成的可执行文件中的段名</span><br><span class="line">        *(.text.entry)        //大括号内表示按照顺序将所有输入目标文件的哪些段,这里先.entry放在.text段的最开头 这样所有的段都从BASE_ADDRESS开始放置</span><br><span class="line">        *(.text .text.*)      //放入这个段中 每行格式为&lt;finename&gt;(sectionname)</span><br><span class="line">    &#125;                         //*为通配符 这一段表示合并*.text.entry和*.text.其他为.text段</span><br><span class="line"></span><br><span class="line">    . = ALIGN(4K);            //4K对齐算好当前地址</span><br><span class="line">    etext = .;                //end 每个段都有两个全局符号给出开始和结束地址</span><br><span class="line">    srodata = .;              //接下来轮到.rodata段,如此类推直到所有段合并</span><br><span class="line">    .rodata : &#123;</span><br><span class="line">        *(.rodata .rodata.*)</span><br><span class="line">        *(.srodata .srodata.*)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    . = ALIGN(4K);</span><br><span class="line">    erodata = .;</span><br><span class="line">    sdata = .;</span><br><span class="line">    .data : &#123;</span><br><span class="line">        *(.data .data.*)</span><br><span class="line">        *(.sdata .sdata.*)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    . = ALIGN(4K);</span><br><span class="line">    edata = .;</span><br><span class="line">    .bss : &#123;</span><br><span class="line">        *(.bss.stack)</span><br><span class="line">        sbss = .;</span><br><span class="line">        *(.bss .bss.*)</span><br><span class="line">        *(.sbss .sbss.*)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    . = ALIGN(4K);</span><br><span class="line">    ebss = .;</span><br><span class="line">    ekernel = .;</span><br><span class="line"></span><br><span class="line">    /DISCARD/ : &#123;</span><br><span class="line">        *(.eh_frame)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>重新构建, 以release模式生成可执行文件 位置在&#x2F;release&#x2F;os</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ cargo build --release</span><br></pre></td></tr></table></figure>
+
+<p>可以用file文件查看</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">~/workfield/ch1/os/target/riscv64gc-unknown-none-elf/release$ file os</span><br><span class="line">os: ELF 64-bit LSB executable, UCB RISC-V, RVC, double-float ABI, version 1 (SYSV), statically linked, not stripped</span><br></pre></td></tr></table></figure>
+<p>可以用file文件查看</p>
+<h3 id="手动加载内核可执行文件"><a href="#手动加载内核可执行文件" class="headerlink" title="手动加载内核可执行文件"></a>手动加载内核可执行文件</h3><p>我们得到的ELF os文件符合我们对内存布局的需求,但我们不能将其直接提交给Qemu<br>因为在代码段与数据段之外还夹着多余的一些元数据,Qemu无法处理这些多余的元数据<br>我们需要丢弃内核可执行文件中得到元数据来得到内核镜像os.bin:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ rust-objcopy --strip-all target/riscv64gc-unknown-none-elf/release/os -O binary target/riscv64gc-unknown-none-elf/release/os.bin</span><br></pre></td></tr></table></figure>
+<p>我们可以使用stat来检查这两个文件的区别</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ stat os</span><br><span class="line">Size: 5272            Blocks: 16         IO Block: 4096   regular file</span><br><span class="line">$ stat os.bin</span><br><span class="line">Size: 4               Blocks: 8          IO Block: 4096   regular file</span><br></pre></td></tr></table></figure>
+<p>内核镜像的大小只有4B,因为它里面质保函我们在entry.asm写的一条指令 li x1,100<br>一般情况下RISC-V架构的一条指令位宽为4B,而内核可执行文件包含了两部分元数据,用于帮助我们更灵活地加载和使用可执行文件,比如在加载时完成重定位,动态链接.<br>但是由于Qemu的加载功能过于简单,也无法动态链接,我们只能将其丢弃再交给Qemu.<br>我们可以理解为我们手动帮Qemu完成了可执行文件的加载</p>
+<h3 id="GDB调试"><a href="#GDB调试" class="headerlink" title="GDB调试"></a>GDB调试</h3><p>在两个终端里分别执行下面两个命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-riscv64 \</span><br><span class="line">    -machine virt \</span><br><span class="line">    -nographic \</span><br><span class="line">    -bios ../bootloader/rustsbi-qemu.bin \</span><br><span class="line">    -device loader,file=target/riscv64gc-unknown-none-elf/release/os.bin,addr=0x80200000 \</span><br><span class="line">    -s -S</span><br><span class="line"></span><br><span class="line">riscv64-unknown-elf-gdb \</span><br><span class="line">    -ex &#x27;file target/riscv64gc-unknown-none-elf/release/os&#x27; \</span><br><span class="line">    -ex &#x27;set arch riscv:rv64&#x27; \</span><br><span class="line">    -ex &#x27;target remote localhost:1234&#x27;</span><br></pre></td></tr></table></figure>
+<p>第一个用来启动qemu,他的参数同之前在makefile中见到的一样。也可以图方便写个makefile<br>参数-s使Qemu监听本地TCP端口1234,等待GDB客户端链接<br>–S使Qemu在收到GDB请求后再开始运行。如果想直接运行Qemu则删掉-s -S<br>下面的命令用于启动GDB客户端,连接到Qemu输出如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[GDB output]</span><br><span class="line">0x0000000000001000 in ?? ()</span><br></pre></td></tr></table></figure>
+<p>PC为0x1000,Qemu处于启动的第一阶段</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ x/10i $pc</span><br><span class="line">=&gt; 0x1000:      auipc   t0,0x0</span><br><span class="line">   0x1004:      addi    a2,t0,40</span><br><span class="line">   0x1008:      csrr    a0,mhartid</span><br><span class="line">   0x100c:      ld      a1,32(t0)</span><br><span class="line">   0x1010:      ld      t0,24(t0)</span><br><span class="line">   0x1014:      jr      t0</span><br><span class="line">   0x1018:      unimp</span><br><span class="line">   0x101a:      0x8000</span><br><span class="line">   0x101c:      unimp</span><br><span class="line">   0x101e:      unimp</span><br></pre></td></tr></table></figure>
+<p>x&#x2F;10i的含义是在当前PC开始,反汇编10条指令。<br>可以看到Qemu固件只包含了几条指令,后面全是数据。<br>数据为0会被反汇编成unimp指令。<br>0x101a处的0x8000则是跳转到下一阶段的关键。<br>我们可以使用si命令单步调试,我们会发现<br>在执行jr t0跳转之前,寄存器t0的值就会设置为0x80000000</p>
+<p>基于同样的道理我们可以反汇编RustSBI最初的几条指令<br>但RustSBI超出了知识范围,我们并不深入。我们检查一下控制权能否被转交给内核。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ (gdb) b *0x80200000</span><br><span class="line">Breakpoint 1 at 0x80200000</span><br></pre></td></tr></table></figure>
+<p>b,breakpoint,设置断点。在0x80200000,第三阶段的入口处设置断点<br>然后执行c,continue命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ (gdb) c</span><br><span class="line">Continuing.</span><br><span class="line"></span><br><span class="line">Breakpoint 1, 0x0000000080200000 in ?? ()</span><br></pre></td></tr></table></figure>
+<p>此时我们停在了0x80200000,检查一下内核的第一条指令是否被正确执行。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ (gdb) x/5i $pc</span><br><span class="line">=&gt; 0x80200000:  li      ra,100</span><br><span class="line">   0x80200004:  unimp</span><br><span class="line">   0x80200006:  unimp</span><br><span class="line">   0x80200008:  unimp</span><br><span class="line">   0x8020000a:  unimp</span><br></pre></td></tr></table></figure>
+<p>这是我们在entry.asm中编写的第一条指令<br>ra是寄存器x1的别名</p>
+<h2 id="为内核支持函数调用"><a href="#为内核支持函数调用" class="headerlink" title="为内核支持函数调用"></a>为内核支持函数调用</h2><p>内核的第一条指令是在汇编entry.asm中手写的。<br>为了使用Rust来实现我们的内核，我们需要将控制权转交给Rust编写的内核入口函数。我们需要先手写若干汇编代码进行一些初始化操作。我们首先需要设置栈空间,这样内核就可以支持函数调用，随后我么就可以调用Rust编写的内核入口函数了。</p>
+<h3 id="函数调用与RISC-V寄存器"><a href="#函数调用与RISC-V寄存器" class="headerlink" title="函数调用与RISC-V寄存器"></a>函数调用与RISC-V寄存器</h3><p>在函数调用,控制传递给被调用函数的时候,需要保存上下文。<br>在RISCV架构中有两条指令符合这样的特征:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">jal rd,imm[20:1]          rd &lt;- pc + 4</span><br><span class="line">                          pc &lt;- pc + imm</span><br><span class="line">jalr rd,(imm[11:0])rs     rd &lt;- pc + 4</span><br><span class="line">                          pc &lt;- rs + imm</span><br></pre></td></tr></table></figure>
+<p>ret使用ra寄存器保存返回地址,我们要保证他在函数执行的过程中全程不变<br>考虑到复杂的多层嵌套的函数调用,可能有很多寄存器的值不能改变。<br>在控制流转移前后需要保持不变的寄存器集合称<strong>函数调用上下文</strong></p>
+<p>由于CPU的寄存器有限,我们需要在物理内存的一个区域保存上下文,在执行结束后再在同样的区域读取恢复上下文。</p>
+<p>函数调用上下文中的寄存器分为如下两类:</p>
+<ul>
+<li>被调用者寄存器 被调用的函数可能会覆盖 而由被调用的函数来保存</li>
+<li>调用者保存寄存器 被调用的函数可能会覆盖 而由发起调用的函数保存</li>
+</ul>
+<p>其过程如下</p>
+<ul>
+<li>调用函数：先保存<strong>调用者保存寄存器</strong>后再调用 返回后恢复</li>
+<li>被调用函数：先保存<strong>被调用者保存寄存器</strong>然后再执行 结束后恢复</li>
+</ul>
+<p>无论是被调用函数还是调用函数都需要因为调用行为而保存恢复寄存器的汇编代码。可以称之为<strong>开场</strong>(Prologue)与<strong>结尾</strong>(Epilogue),他们由<strong>编译器自动插入</strong>。</p>
+<p>在RISC-V架构上的调用规范</p>
+<ul>
+<li>寄存器a0~a7 调用者保存  用来传递参数,a0与a1还可以保存返回值</li>
+<li>寄存器t0~t6 调用者保存 临时寄存器 可以随意使用</li>
+<li>寄存器s0~s11  被调用者保存 临时寄存器 被调用函数保存后才能使用</li>
+<li>zero(x0) 恒为0</li>
+<li>ra(x1)  被调用者保存</li>
+<li>sp(x2)  被调用者保存 栈指针</li>
+<li>fp(s0)  被调用者保存 栈帧指针(frame pointer)</li>
+<li>gp(x3) tp(x4) 程序运行期间不变 不必放在在函数调用上下文</li>
+</ul>
+<p>sp与fp共同决定了当前栈中的一块栈帧的位置与大小</p>
+<h3 id="分配并使用启动栈"><a href="#分配并使用启动栈" class="headerlink" title="分配并使用启动栈"></a>分配并使用启动栈</h3><p>在entry.asm中分配启动栈空间,并将控制权在转交给Rust入口之前就将栈指针sp设置为栈顶。<br>RISC-V中栈与x86一样从高到低增长。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"> 1         .section .text.entry</span><br><span class="line"> 2         .globl _start</span><br><span class="line"> 3 _start:</span><br><span class="line"> 4         la sp,boot_stack_top            //修改了sp栈指针为top</span><br><span class="line"> 5         call rust_main                  //把控制权转交给rust_main,在main.rs中实现</span><br><span class="line"> 6</span><br><span class="line"> 7         .section .bss.stack             //这里先放在.bss段</span><br><span class="line"> 8         .globl boot_stack_lower_bound</span><br><span class="line"> 9 boot__stack_lower_bound:                //能增长到的下限</span><br><span class="line">10         .space 4096*16</span><br><span class="line">11         .globl boot_stack_top</span><br><span class="line">12 boot_stack_top :                        //栈顶</span><br></pre></td></tr></table></figure>
+<p>在10行预留了4096*16B,64KB的空间作为栈空间<br>我们用boot_stack_top来表示栈顶的位置<br>用boot_stack_lower_bound来标识栈能增长到的下限<br>他们都设置为全局符号供其他目标文件使用<br>第7行可以看到这块空间被放在.bss.stack段中.链接后汇聚到.bss段<br>.bss一般存放未定义,初始化为0的数据,而栈不需要使用前初始化为0,因为函数调用时内容会被覆盖。我们尝试将其放在.data段中但未能成功,所以才将其放在.bss<br>链接脚本中,sbss与ebss分别分别指向.bss段除了.bss.stack以外的起始与终止地址,在使用这一部分数据之前需要将他们初始化为0.这个过程在下一节中进行。</p>
+<p>我们通过call rust_main将控制权转交给Rust代码<br>该入口点在main.rs中实现。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">mod lang_items;</span><br><span class="line"></span><br><span class="line">//fn main() &#123;</span><br><span class="line">//        println!(&quot;Hello, world!&quot;);</span><br><span class="line">//&#125;</span><br><span class="line"></span><br><span class="line">use core::arch::global_asm;</span><br><span class="line">global_asm!(include_str!(&quot;entry.asm&quot;));</span><br><span class="line"></span><br><span class="line">#[no_mangle]</span><br><span class="line">pub fn rust_main() -&gt; !&#123;</span><br><span class="line">    clear_bss();            //清零.bss然后循环</span><br><span class="line">    loop&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//内核初始化的一个重要工作就是确保.bss清零</span><br><span class="line">//此处进行对.bss段的清零 我们需要保证被分配到.bss段的全局变量为0</span><br><span class="line">//由于控制权已被转交给Rust,我们可以使用Rust来实现这一功能</span><br><span class="line">fn clear_bss()&#123;</span><br><span class="line">    extern &quot;C&quot;&#123;</span><br><span class="line">        fn sbss();</span><br><span class="line">        fn ebss();</span><br><span class="line">    &#125;</span><br><span class="line">    (sbss as usize..ebss as usize).for_each(|a|&#123;</span><br><span class="line">        unsafe&#123;(a as *mut u8).write_volatile(0)&#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中#[no_mangle]用于避免编译器对他的名字进行混淆,防止链接时找不到该符号。在函数clear_bss中我们会尝试从其他地方找到全局符号sbss和ebss,他们由链接脚本linker.ld给出,并分别指出.bss段的起始和终止地址。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">.bss : &#123;</span><br><span class="line">    *(.bss.stack)</span><br><span class="line">    sbss = .;</span><br><span class="line">    *(.bss .bss.*)</span><br><span class="line">    *(.sbss .sbss.*)</span><br><span class="line">&#125;</span><br><span class="line">ebss = .;</span><br></pre></td></tr></table></figure>
+<p>extern “C” 可以引用一个外部的C函数接口,这里引用位置转化为usize获取他的地址,来得到.bss两端的地址,随后将两者之间的.bss内容归零.<br>此处使用了Rust的迭代器与闭包的语法,在很多情况下他们可以提高开发效率。也可以改写为等价的for循环。</p>
+<blockquote>
+<p>在C语言中,把一个地址转化为一个裸指针并修改其值是司空见惯的。<br>而Rust认为对于裸指针的解引用(Dereference)是一种unsafe的行为,所以要包裹在unsafe块中<br>Rust进行了更多的语义约束来保证安全性。使用unsafe块来告知编译器不要对他进行完整的约束检查。当代码不能够正常运行时我们往往最先检查unsafe块，因为他没有受到编译器的保护。</p>
+</blockquote>
+<h2 id="SBI"><a href="#SBI" class="headerlink" title="SBI"></a>SBI</h2><p>本节为三叶子OS的最后一步,基于RustSBI提供的服务在屏幕上打印Hello world与关机<br>RustSBI介于底层硬件与内核之间,是我们的OS的底层执行环境 它除了为上层应用进行初始化以外,还要为上层应用提供服务</p>
+<p>当内核发起请求,计算机转由RustSBI控制来响应,待请求处理完毕后控制权交还给内核.<br>我们所编写的OS内核处于Supervisor特权级,而RustSBI处于Machine特权级(最高的特权级)<br>类似RustSBI这样运行在Machine特权级的软件成为<strong>Supervisor Execution Environment</strong>(SEE),即Supervisor执行环境<br>两层之间的接口被称为<strong>Supervisor Binary Interface</strong>(SBI),即Supervisor二进制接口.<br>SBI spec标准由RISC-V开源社区维护,规定了SBI接口层要包含的功能,RustSBI按照它实现了需要支持的大部分功能.<br>不过RustSBI并不是SBI标准的唯一一种实现.</p>
+<p>那么如何才能调用RustSBI提供的服务呢?<br>首先不能函数调用,因为RustSBI是构建后的可执行文件,内核无从得知RustSBI中的符号和地址.<br>然而RustSBI开源社区的sbi_rt封装了SBI服务的接口,我们可以直接使用.</p>
+<h3 id="引入sbi-rt依赖"><a href="#引入sbi-rt依赖" class="headerlink" title="引入sbi_rt依赖"></a>引入sbi_rt依赖</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// os/Cargo.toml</span><br><span class="line">[dependencies]</span><br><span class="line">sbi-rt = &#123; version = &quot;0.0.2&quot;, features = [&quot;legacy&quot;] &#125;</span><br></pre></td></tr></table></figure>
+<p>带上legacy的feature,因为我们需要用到的串口读写属于SBI的遗留接口<br>我们将内核与RustSBI通信的相关功能在子模块sbi中实现,并在main.rs中加入mod sbi<br>在os&#x2F;src&#x2F;sbi.rs中直接调用sbi_rt提供的接口来输出字符,同时定义关机功能</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">pub fn console_putchar(c: usize) &#123;</span><br><span class="line">    #[allow(deprecated)]</span><br><span class="line">    sbi_rt::legacy::console_putchar(c);</span><br><span class="line">&#125;</span><br><span class="line">pub fn shutdown(failure: bool) -&gt; ! &#123;</span><br><span class="line">    use sbi_rt::&#123;system_reset, NoReason, Shutdown, SystemFailure&#125;;</span><br><span class="line">    if !failure &#123;</span><br><span class="line">        system_reset(Shutdown, NoReason);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        system_reset(Shutdown, SystemFailure);</span><br><span class="line">    &#125;</span><br><span class="line">    unreachable!()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="格式化输出"><a href="#格式化输出" class="headerlink" title="格式化输出"></a>格式化输出</h3><p>console_putchar的功能过于受限,如果想打印一行 Hello world需要进行多次调用<br>我们尝试自己编写基于console_putchar 的println!宏</p>
+<p>在console.rs中实现</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">use crate::sbi::console_putchar;</span><br><span class="line">use core::fmt::&#123;self, Write&#125;;       // core::fmt::Write是一个trait 包含一个实现println!宏的方法</span><br><span class="line">                                    //Write trait提供了write_fmt方法</span><br><span class="line">struct Stdout;                      //该结构体不包含任何字段,被称为类单元结构体</span><br><span class="line"></span><br><span class="line">impl Write for Stdout &#123;             //为Stdout应用Write trait,来定义接口 write_str方法必须实现</span><br><span class="line">    fn write_str(&amp;mut self, s: &amp;str) -&gt; fmt::Result &#123;</span><br><span class="line">        for c in s.chars() &#123;</span><br><span class="line">            console_putchar(c as usize);</span><br><span class="line">        &#125;</span><br><span class="line">        Ok(())</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//在为Stdout实现了Write trait需要的write_str方法后,就可以调用他提供的write_fmt方法,进而实现print</span><br><span class="line"></span><br><span class="line">pub fn print(args: fmt::Arguments) &#123;</span><br><span class="line">    Stdout.write_fmt(args).unwrap();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//下为宏定义</span><br><span class="line">#[macro_export]</span><br><span class="line">macro_rules! print &#123;</span><br><span class="line">    ($fmt: literal $(, $($arg: tt)+)?) =&gt; &#123;</span><br><span class="line">        $crate::console::print(format_args!($fmt $(, $($arg)+)?));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">#[macro_export]</span><br><span class="line">macro_rules! println &#123;</span><br><span class="line">    ($fmt: literal $(, $($arg: tt)+)?) =&gt; &#123;</span><br><span class="line">        $crate::console::print(format_args!(concat!($fmt, &quot;\n&quot;) $(, $($arg)+)?));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Hello-world"><a href="#Hello-world" class="headerlink" title="Hello,world!"></a>Hello,world!</h3><p>不要忘了重新build并切除元数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cargo build --release</span><br><span class="line">rust-objcopy --strip-all target/riscv64gc-unknown-none-elf/release/os -O binary target/riscv64gc-unknown-none-elf/release/os.bin</span><br></pre></td></tr></table></figure>
+<p>可喜可贺 可喜可贺</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">[rustsbi] RustSBI version 0.3.1, adapting to RISC-V SBI v1.0.0</span><br><span class="line">.______       __    __      _______.___________.  _______..______   __</span><br><span class="line">|   _  \     |  |  |  |    /       |           | /       ||   _  \ |  |</span><br><span class="line">|  |_)  |    |  |  |  |   |   (----`---|  |----`|   (----`|  |_)  ||  |</span><br><span class="line">|      /     |  |  |  |    \   \       |  |      \   \    |   _  &lt; |  |</span><br><span class="line">|  |\  \----.|  `--&#x27;  |.----)   |      |  |  .----)   |   |  |_)  ||  |</span><br><span class="line">| _| `._____| \______/ |_______/       |__|  |_______/    |______/ |__|</span><br><span class="line">[rustsbi] Implementation     : RustSBI-QEMU Version 0.2.0-alpha.2</span><br><span class="line">[rustsbi] Platform Name      : riscv-virtio,qemu</span><br><span class="line">[rustsbi] Platform SMP       : 1</span><br><span class="line">[rustsbi] Platform Memory    : 0x80000000..0x88000000</span><br><span class="line">[rustsbi] Boot HART          : 0</span><br><span class="line">[rustsbi] Device Tree Region : 0x87000000..0x87000ef2</span><br><span class="line">[rustsbi] Firmware Address   : 0x80000000</span><br><span class="line">[rustsbi] Supervisor Address : 0x80200000</span><br><span class="line">[rustsbi] pmp01: 0x00000000..0x80000000 (-wr)</span><br><span class="line">[rustsbi] pmp02: 0x80000000..0x80200000 (---)</span><br><span class="line">[rustsbi] pmp03: 0x80200000..0x88000000 (xwr)</span><br><span class="line">[rustsbi] pmp04: 0x88000000..0x00000000 (-wr)</span><br><span class="line">Hello,world!</span><br><span class="line">[kernel] Panicked at src/main.rs:17 Shutdown machine!</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="章节小节"><a href="#章节小节" class="headerlink" title="章节小节"></a>章节小节</h2><p>我们实现了一个可以在裸机上运行的Hello,world程序<br>为了实现它,我们已做了以下工作:</p>
+<ol>
+<li>配置Rust编译器的目标三元组,修改了默认的目标平台</li>
+<li>移除了Rust程序的标准库依赖,转而使用核心库core,以便在裸机上运行</li>
+<li>由于核心库下没有panic宏的具体实现,我们实现了一个简陋的panic处理函数让程序通过编译</li>
+<li>程序执行之前需要先跳转到start进行一些初始化工作后再跳转到入口点main,很遗憾他们由标准库完成 我们需要通知编译器程序没有入口点main,这样也就跳过了start</li>
+<li>我们会得到一个空程序,入口地址Entry是0,NULL,空指针,反汇编没有生成任何汇编代码,连main也没有,但它仍然是一个合法的二进制程序</li>
+<li>我们明晰了Qemu的启动流程,与各阶段对应的起始物理地址 第一阶段由QEMU完成 第二阶段由bootloader完成 我们只关心跳转到第三阶段的内核</li>
+<li>我们编写了一个简单的汇编代码,并把它嵌入main中</li>
+<li>为了让运行地址符合Qemu的要求,我们需要自定义链接脚本让内核位于正确的内存地址,并配置好cargo的config文件</li>
+<li>链接得到的ELF文件仍然有一些多余的元数据来帮助我们灵活的加载和使用可执行文件,Qemu过于简单的加载功能无法处理他们,我们需要丢弃他们</li>
+<li>我们配置了GDB调试环境 @TODO:makefile里写好GDB启动内容 并正确检查到内核入口地址成功载入内核</li>
+<li>我们期望用Rust来编写内核而不是使用汇编,我们需要把控制权交给Rust,首先在汇编中启动栈空间</li>
+<li>在汇编中设置好跳转到Rust程序与栈指针 随后控制权就正常地转交到由Rust编写的程序中 至此我们已经可以用Rust来编写内核了</li>
+<li>内核初始化的一项重要步骤便是归零.bss段,在main.rs下rust_main定义 </li>
+<li>引入SBI接口,使用RustSBI提供的服务来实现print 最终输出hello,world</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"># 操作系统</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2024</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Nostorusium</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
